@@ -112,9 +112,12 @@ namespace Application.Services.User
             if (profile is null) throw new Exception($"User profile not found [userId = {userId}].");
 
             // Обновляем профиль
-            if (r.Additional is not null) profile.Additional = r.Additional;
+            if (r.Age is not null) profile.Age = r.Age;
+            if (r.Height is not null) profile.Height = r.Height;
+            if (r.Weight is not null) profile.Weight = r.Weight;
             if (r.Gender is not null) profile.Gender = r.Gender;
-            if (r.BirthDate is not null) profile.BirthDate = r.BirthDate;
+            if (r.SmokeStatus is not null) profile.SmokeStatus = r.SmokeStatus;
+            if (r.Goals is not null) profile.Goals = r.Goals;
 
             _db.UserProfiles.Update(profile);
             await _db.SaveChangesAsync(cancellation);
@@ -215,7 +218,6 @@ namespace Application.Services.User
                 return new LoginResponse
                 {
                     User = user,
-                    Profile = user.Profile,
                     Token = token
                 };
             }

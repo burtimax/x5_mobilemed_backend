@@ -5,6 +5,7 @@ using Application.Services.Email;
 using Application.Services.Llm;
 using Application.Services.StatEvent;
 using Application.Services.User;
+using Application.Utils;
 using Infrastructure.Db.App;
 using Infrastructure.Db.App.Entities;
 using Microsoft.AspNetCore.Identity;
@@ -44,6 +45,8 @@ public static class IServiceCollectionExtensions
 
         services.AddScoped<ILlmService, LlmService>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
+        services.AddScoped<SetByUserIdInterceptor>();
     }
 
     public static AppConfiguration AddConfigurations(this IServiceCollection services, IConfiguration configuration)
@@ -76,10 +79,10 @@ public static class IServiceCollectionExtensions
         DatabaseAppConfiguration config,
         IHostEnvironment environment)
     {
-        services.AddDbContext<AppDbContext>(options =>
+        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             {
                 options.UseNpgsql(config.AppDbConnection);
-
+                options.AddInterceptors(serviceProvider.GetRequiredService<SetByUserIdInterceptor>());
                 // ВАЖНО: EnableSensitiveDataLogging включается только в режиме разработки
                 // В production это может привести к утечке конфиденциальных данных в логах
                 if (environment.IsDevelopment())

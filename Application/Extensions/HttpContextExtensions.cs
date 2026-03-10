@@ -15,7 +15,6 @@ public static class HttpContextExtensions
         string GetClaim(string claim) => httpContext.User.Claims
             ?.First(x => x.Type.Equals(claim, StringComparison.OrdinalIgnoreCase))?.Value ?? throw new Exception($"NOT FOUND CLAIM IN TOKEN [{claim}]");
 
-        userTokenData.ExternalId = GetClaim("ExternalId");
         userTokenData.UserId = Guid.Parse(GetClaim(ClaimTypes.NameIdentifier));
         userTokenData.SessionId = long.Parse(GetClaim("SessionId"));
         userTokenData.Utm = GetClaim("Utm");

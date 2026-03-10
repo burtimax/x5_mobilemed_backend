@@ -22,20 +22,56 @@ public class UserProfileEntity : BaseEntity
     public UserEntity User { get; set; } = null!;
 
     /// <summary>
-    /// Дата рождения
+    /// Возраст (лет)
     /// </summary>
-    [Comment("Дата рождения")]
-    public DateOnly? BirthDate { get; set; }
+    [Comment("Возраст (лет)")]
+    public int? Age { get; set; }
+
+    /// <summary>
+    /// Рост в см.
+    /// </summary>
+    [Comment("Рост в см.")]
+    public int? Height { get; set; }
+
+    /// <summary>
+    /// Вес в кг.
+    /// </summary>
+    [Comment("Вес в кг")]
+    public int? Weight { get; set; }
 
     /// <summary>
     /// Пол пользователя
     /// </summary>
-    [Comment("Пол пользователя")]
-    public int? Gender { get; set; }
+    [Comment("Пол пользователя: 0 - муж, 1 - жен.")]
+    public Gender? Gender { get; set; }
 
     /// <summary>
-    /// Дополнительные поля пользователя в формате JSON
+    /// Статус курения
     /// </summary>
-    [Comment("Доп поля пользователя")]
-    public JsonDocument? Additional { get; set; }
+    [Comment("Статус курения: 0 - не курит, 1 - курит")]
+    public SmokeStatus? SmokeStatus { get; set; }
+
+    /// <summary>
+    /// Цели пользователя
+    /// </summary>
+    [Comment("Цели пользователя")]
+    public List<string>? Goals { get; set; } = new List<string>();
+}
+
+/// <summary>
+/// Пол
+/// </summary>
+public enum Gender
+{
+    Male = 0,
+    Female = 1
+}
+
+/// <summary>
+/// Статус курения
+/// </summary>
+public enum SmokeStatus
+{
+    NotSmoking = 0,
+    Smoking = 1,
 }

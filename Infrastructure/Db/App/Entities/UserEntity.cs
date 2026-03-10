@@ -15,7 +15,6 @@ public class UserEntity : IBaseEntity
     /// <summary>
     /// Профиль пользователя
     /// </summary>
-    [JsonIgnore]
     public UserProfileEntity? Profile { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }

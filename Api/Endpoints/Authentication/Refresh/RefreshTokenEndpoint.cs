@@ -33,7 +33,7 @@ public sealed class RefreshTokenEndpoint : EndpointWithoutRequest<LoginResponse>
     {
         var tokenData = HttpContext.TokenData();
 
-        var result = await _userService.RefreshTokenAsync(tokenData, c);
+        var result = await _userService.RefreshTokenAsync(tokenData.UserId, c);
 
         await SendAsync(result, cancellation: c);
     }

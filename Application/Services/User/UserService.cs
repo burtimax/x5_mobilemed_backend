@@ -91,6 +91,7 @@ namespace Application.Services.User
                 .FirstOrDefaultAsync(x => x.Id.Equals(userId));
         }
 
+
         /// <summary>
         /// Обновляет данные пользователя
         /// </summary>
@@ -121,13 +122,6 @@ namespace Application.Services.User
             return user;
         }
 
-        public async Task<UserEntity?> GetByExternalIdAsync(string externalId, CancellationToken ct = default)
-        {
-            return await _db.Users
-                .Include(u => u.Profile)
-                .FirstOrDefaultAsync(u => u.ExternalId == externalId);
-        }
-
         /// <summary>
         /// Обновляет (refresh) JWT токен для уже аутентифицированного пользователя
         /// </summary>
@@ -135,16 +129,16 @@ namespace Application.Services.User
         /// <param name="cancellation">Токен отмены операции</param>
         /// <returns>Новый токен и актуальные данные пользователя</returns>
         public async Task<LoginResponse> RefreshTokenAsync(
-            UserTokenData tokenData,
+            Guid userId,
             CancellationToken cancellation)
         {
             try
             {
-                _logger.LogInformation("Обновление токена для пользователя с ID: {UserId}", tokenData.UserId);
+                _logger.LogInformation("Обновление токена для пользователя с ID: {UserId}", userId);
 
-                var user = await GetByExternalIdAsync(tokenData.ExternalId, cancellation);
+                var user = await GetByIdAsync(userId);
                 if (user is null)
-                    throw new Exception($"Пользователь не найден [id = {tokenData.UserId}].");
+                    throw new Exception($"Пользователь не найден [id = {userId}].");
 
                 var profile = await _db.UserProfiles
                     .AsNoTracking()
@@ -162,7 +156,7 @@ namespace Application.Services.User
                 }
 
                 long sessionId = DateTime.UtcNow.Ticks;
-                var token = await CreateAuthTokenAsync(sessionId, user, tokenData.Utm);
+                var token = await CreateAuthTokenAsync(sessionId, user, null);
 
                 return new LoginResponse
                 {
@@ -173,7 +167,7 @@ namespace Application.Services.User
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ошибка при обновлении токена для пользователя с ID: {UserId}", tokenData.UserId);
+                _logger.LogError(ex, "Ошибка при обновлении токена для пользователя с ID: {UserId}", userId);
                 throw;
             }
         }
@@ -186,20 +180,25 @@ namespace Application.Services.User
         /// <returns>Результат авторизации с пользователем, профилем и токеном</returns>
         /// <exception cref="Exception">Выбрасывается при ошибках авторизации</exception>
         public async Task<LoginResponse> LoginAsync(
-            LoginRequest request,
+            Guid? userId,
             CancellationToken cancellation)
         {
             try
             {
-                _logger.LogInformation("Попытка входа пользователя {RequestExternalIdName} = {RequestExternalId}", nameof(request.ExternalId), request.ExternalId);
+                _logger.LogInformation("Попытка входа пользователя {RequestExternalIdName} = {RequestExternalId}", nameof(UserEntity.Id), userId);
 
                 // Находим пользователя по email
-                var user = await GetByExternalIdAsync(request.ExternalId, cancellation);
+                UserEntity? user = null;
+
+                if (userId is not null)
+                {
+                    user = await GetByIdAsync(userId.Value);
+                }
+
                 if (user == null)
                 {
                     UserEntity userEntity = new()
                     {
-                        ExternalId = request.ExternalId,
                         Profile = new UserProfileEntity()
                     };
                     _db.Users.Add(userEntity);
@@ -209,10 +208,7 @@ namespace Application.Services.User
 
                 // Создаем токен
                 long sessionId = DateTime.UtcNow.Ticks;
-                var token = await CreateAuthTokenAsync(sessionId, user, request.Utm);
-
-                // Логируем событие входа
-                //await _statEventService.SaveRequestEvent(user.Id, sessionId, request.Utm, "/login");
+                var token = await CreateAuthTokenAsync(sessionId, user, null);
 
                 _logger.LogInformation("Успешный вход пользователя с ID: {UserId}", user.Id);
 
@@ -225,7 +221,7 @@ namespace Application.Services.User
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Ошибка при попытке входа пользователя {nameof(request.ExternalId)} = {request.ExternalId}");
+                _logger.LogError(ex, $"Ошибка при попытке входа пользователя {nameof(UserEntity.Id)} = {userId}");
                 throw;
             }
         }
@@ -247,8 +243,8 @@ namespace Application.Services.User
             var claims = new List<System.Security.Claims.Claim>
             {
                 new(System.Security.Claims.ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new("Id", user.Id.ToString()),
                 new("SessionId", sessionId.ToString()),
-                new("ExternalId", user.ExternalId),
                 new("Utm", utm ?? ""),
             };
 

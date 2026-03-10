@@ -13,11 +13,6 @@ public class UserEntity : IBaseEntity
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Идентификатор от X5 для пользователя
-    /// </summary>
-    public string ExternalId { get; set; }
-
-    /// <summary>
     /// Профиль пользователя
     /// </summary>
     [JsonIgnore]

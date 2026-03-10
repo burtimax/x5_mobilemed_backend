@@ -29,20 +29,12 @@ namespace Application.Services.User
         public Task<UserEntity?> GetByIdAsync(Guid userId);
 
         /// <summary>
-        /// Получение пользователя по ключу X5.
-        /// </summary>
-        /// <param name="appId"></param>
-        /// <param name="userId"></param>
-        /// <returns></returns>
-        public Task<UserEntity?> GetByExternalIdAsync(string externalId, CancellationToken cancellation = default);
-
-        /// <summary>
         /// Авторизация пользователя по email и паролю
         /// </summary>
         /// <param name="request">Данные для авторизации</param>
         /// <param name="cancellation">Токен отмены операции</param>
         /// <returns>Результат авторизации с пользователем, профилем и токеном</returns>
-        Task<LoginResponse> LoginAsync(LoginRequest request, CancellationToken cancellation);
+        Task<LoginResponse> LoginAsync(Guid? userId, CancellationToken cancellation);
 
         /// <summary>
         /// Обновление (refresh) JWT токена по данным из текущего токена
@@ -50,6 +42,6 @@ namespace Application.Services.User
         /// <param name="tokenData">Данные пользователя из текущего JWT токена</param>
         /// <param name="cancellation">Токен отмены операции</param>
         /// <returns>Новый токен и актуальные данные пользователя</returns>
-        Task<LoginResponse> RefreshTokenAsync(UserTokenData tokenData, CancellationToken cancellation);
+        Task<LoginResponse> RefreshTokenAsync(Guid userId, CancellationToken cancellation);
     }
 }

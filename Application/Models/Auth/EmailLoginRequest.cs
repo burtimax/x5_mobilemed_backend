@@ -8,7 +8,7 @@ public sealed class LoginRequest
     /// <summary>
     /// Внешний ID пользователя
     /// </summary>
-    public string ExternalId { get; set; } = null!;
+    public Guid? Id { get; set; } = null!;
 
     /// <summary>
     /// UTM метка (опционально)

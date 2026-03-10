@@ -1,0 +1,57 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using ModuleLLM.Configuration;
+using ModuleLLM.Services;
+using Shared.Contracts;
+
+namespace Application.Services.Llm;
+
+/// <summary>
+/// Сервис для работы с LLM
+/// </summary>
+public class LlmService : ILlmService
+{
+    private readonly ILlmApiService _llmApiService;
+    private readonly LlmProviderOptions _llmOptions;
+    private readonly ILogger<LlmService> _logger;
+
+    public LlmService(
+        ILlmApiService llmApiService,
+        IOptions<LlmProviderOptions> llmOptions,
+        ILogger<LlmService> logger)
+    {
+        _llmApiService = llmApiService;
+        _llmOptions = llmOptions.Value;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Обрабатывает транскрипцию консультации через LLM и возвращает структурированный результат
+    /// </summary>
+    public async Task<string> ProcessConsultationTranscriptionAsync(
+        string transcription,
+        string prompt,
+        bool isJsonResponse = true,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(transcription))
+                throw new Exception("Транскрипция не может быть пустой");
+
+            string result;
+            var providerName = _llmOptions.Provider ?? "groq";
+
+            result = await _llmApiService.ProcessConsultationTranscriptionAsync(
+                transcription, prompt, isJsonResponse, cancellationToken);
+
+            _logger.LogInformation("Успешно обработана транскрипция консультации через LLM ({Provider})", providerName);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            //_logger.LogError(ex, "Критическая ошибка при обработке транскрипции консультации");
+            throw;
+        }
+    }
+}

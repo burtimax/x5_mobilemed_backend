@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="FastEndpoints.Security" Version="5.35.0" />
+      <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.4" />
+      <PackageReference Include="Serilog" Version="4.2.0" />
+      <PackageReference Include="MailKit" Version="4.14.1" />
+      <PackageReference Include="Mapster" Version="7.4.0" />
+      <PackageReference Include="Mapster.DependencyInjection" Version="1.0.1" />
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.4" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.4" />
+      <PackageReference Include="WTelegramBot" Version="9.0.1" />
+      <PackageReference Include="WTelegramClient" Version="4.3.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+      <ProjectReference Include="..\ModuleLLM\ModuleLLM.csproj" />
+      <ProjectReference Include="..\ModuleTelegramLogger\ModuleTelegramLogger.csproj" />
+      <ProjectReference Include="..\Shared\Shared.csproj" />
+    </ItemGroup>
+
+</Project>

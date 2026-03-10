@@ -1,0 +1,30 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend_cnt
+    restart: unless-stopped
+    hostname: backend-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    logging:
+      options:
+        max-size: "200k"
+        max-file: "10"
+    volumes:
+      - ./../config/appsettings.json:/app/appsettings.json
+      - ./../app_data/bot_media:/app/media
+      - ./../app_data/bot_exceptions:/app/exceptions
+      - ./../app_data/documents:/app/documents
+    ports:
+      - 127.0.0.1:25000:8080 
+    networks:
+      - postgres
+
+networks:
+  postgres:
+    name: postgres
+    external: true

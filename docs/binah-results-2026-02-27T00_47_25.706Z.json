@@ -1,0 +1,126 @@
+{
+  "takenAt": "2026-02-27T00:47:25.705Z",
+  "source": "web_sdk",
+  "userInfo": {
+    "sex": "MALE",
+    "age": 26,
+    "heightCm": 176,
+    "weightKg": 100,
+    "smokingStatus": "SMOKER"
+  },
+  "metrics": {
+    "pulseRate": {
+      "value": 68,
+      "unit": "bpm",
+      "confidence": null
+    },
+    "respirationRate": {
+      "value": 18,
+      "unit": "breaths_per_min",
+      "confidence": null
+    },
+    "stressLevel": {
+      "value": 1,
+      "unit": "ratio",
+      "confidence": null
+    },
+    "sdnn": {
+      "value": 71,
+      "unit": "ms",
+      "confidence": null
+    },
+    "bloodPressure": {
+      "systolic": 122,
+      "diastolic": 81,
+      "unit": "mmHg",
+      "confidence": null
+    }
+  },
+  "sdkRaw": {
+    "results": {
+      "pulseRate": {
+        "value": 68,
+        "confidenceLevel": 2
+      },
+      "respirationRate": {
+        "value": 18,
+        "confidenceLevel": 3
+      },
+      "sdnn": {
+        "value": 71,
+        "confidenceLevel": 1
+      },
+      "stressLevel": {
+        "value": 1
+      },
+      "stressIndex": {
+        "value": 65
+      },
+      "meanRri": {
+        "value": 915,
+        "confidenceLevel": 1
+      },
+      "rmssd": {
+        "value": 78
+      },
+      "bloodPressure": {
+        "value": {
+          "systolic": 122,
+          "diastolic": 81
+        }
+      },
+      "prq": {
+        "value": 3.8,
+        "confidenceLevel": 2
+      },
+      "wellnessLevel": {
+        "value": 3
+      },
+      "wellnessIndex": {
+        "value": 8
+      },
+      "hemoglobin": {
+        "value": 12.8
+      },
+      "hemoglobinA1c": {
+        "value": 5.51
+      },
+      "highHemoglobinA1CRisk": {
+        "value": 1
+      },
+      "highBloodPressureRisk": {
+        "value": 1
+      },
+      "highFastingGlucoseRisk": {
+        "value": 3
+      },
+      "highTotalCholesterolRisk": {
+        "value": 1
+      },
+      "lowHemoglobinRisk": {
+        "value": 1
+      },
+      "heartAge": {
+        "value": 35
+      },
+      "ascvdRisk": {
+        "value": 3
+      },
+      "normalizedStressIndex": {
+        "value": 15
+      },
+      "ascvdRiskLevel": {
+        "value": 1
+      },
+      "cardiacWorkload": {
+        "value": 3.92
+      },
+      "meanArterialPressure": {
+        "value": 94
+      },
+      "pulsePressure": {
+        "value": 41
+      }
+    }
+  }
+}

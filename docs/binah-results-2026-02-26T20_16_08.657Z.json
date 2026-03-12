@@ -1,0 +1,110 @@
+{
+  "takenAt": "2026-02-26T20:16:08.656Z",
+  "source": "web_sdk",
+  "metrics": {
+    "pulseRate": {
+      "value": 76,
+      "unit": "bpm",
+      "confidence": null
+    },
+    "respirationRate": {
+      "value": 21,
+      "unit": "breaths_per_min",
+      "confidence": null
+    },
+    "stressLevel": {
+      "value": 3,
+      "unit": "ratio",
+      "confidence": null
+    },
+    "sdnn": {
+      "value": 23,
+      "unit": "ms",
+      "confidence": null
+    },
+    "bloodPressure": {
+      "systolic": 116,
+      "diastolic": 80,
+      "unit": "mmHg",
+      "confidence": null
+    }
+  },
+  "sdkRaw": {
+    "results": {
+      "pulseRate": {
+        "value": 76,
+        "confidenceLevel": 3
+      },
+      "respirationRate": {
+        "value": 21,
+        "confidenceLevel": 2
+      },
+      "sdnn": {
+        "value": 23,
+        "confidenceLevel": 2
+      },
+      "stressLevel": {
+        "value": 3
+      },
+      "stressIndex": {
+        "value": 357
+      },
+      "meanRri": {
+        "value": 782,
+        "confidenceLevel": 2
+      },
+      "rmssd": {
+        "value": 24
+      },
+      "bloodPressure": {
+        "value": {
+          "systolic": 116,
+          "diastolic": 80
+        }
+      },
+      "prq": {
+        "value": 3.7,
+        "confidenceLevel": 2
+      },
+      "wellnessLevel": {
+        "value": 3
+      },
+      "wellnessIndex": {
+        "value": 8
+      },
+      "hemoglobin": {
+        "value": 16.2
+      },
+      "hemoglobinA1c": {
+        "value": 5.85
+      },
+      "highHemoglobinA1CRisk": {
+        "value": 1
+      },
+      "highBloodPressureRisk": {
+        "value": 1
+      },
+      "highFastingGlucoseRisk": {
+        "value": 3
+      },
+      "highTotalCholesterolRisk": {
+        "value": 2
+      },
+      "lowHemoglobinRisk": {
+        "value": 1
+      },
+      "normalizedStressIndex": {
+        "value": 48
+      },
+      "cardiacWorkload": {
+        "value": 3.95
+      },
+      "meanArterialPressure": {
+        "value": 92
+      },
+      "pulsePressure": {
+        "value": 35
+      }
+    }
+  }
+}

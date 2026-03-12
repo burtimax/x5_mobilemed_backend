@@ -49,6 +49,8 @@ public partial class AppDbContext
 
         // Прикладные таблицы
         builder.Entity<StatEventEntity>().ToTable("stat_events", statSchema);
+        builder.Entity<UserRppgScanEntity>().ToTable("user_rppg_scans", appSchema);
+        builder.Entity<UserRppgScanResultItemEntity>().ToTable("user_rppg_scan_result_items", appSchema);
     }
 
     /// <summary>
@@ -98,5 +100,19 @@ public partial class AppDbContext
             .WithMany()
             .HasForeignKey(s => s.UserId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // Настройка связи UserRppgScanEntity -> UserEntity
+        builder.Entity<UserRppgScanEntity>()
+            .HasOne(s => s.User)
+            .WithMany()
+            .HasForeignKey(s => s.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Настройка связи UserRppgScanResultItemEntity -> UserRppgScanEntity
+        builder.Entity<UserRppgScanResultItemEntity>()
+            .HasOne(i => i.Scan)
+            .WithMany(s => s.ResultItems)
+            .HasForeignKey(i => i.ScanId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

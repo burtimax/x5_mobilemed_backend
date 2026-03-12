@@ -1,0 +1,106 @@
+{
+  "takenAt": "2026-02-27T00:44:14.316Z",
+  "source": "web_sdk",
+  "userInfo": {
+    "sex": "MALE",
+    "age": 33,
+    "heightCm": 178,
+    "weightKg": 87,
+    "smokingStatus": "NON_SMOKER"
+  },
+  "metrics": {
+    "pulseRate": {
+      "value": 91,
+      "unit": "bpm",
+      "confidence": null
+    },
+    "respirationRate": {
+      "value": 23,
+      "unit": "breaths_per_min",
+      "confidence": null
+    },
+    "stressLevel": {
+      "value": null,
+      "unit": "ratio",
+      "confidence": null
+    },
+    "sdnn": {
+      "value": null,
+      "unit": "ms",
+      "confidence": null
+    },
+    "bloodPressure": {
+      "systolic": 123,
+      "diastolic": 82,
+      "unit": "mmHg",
+      "confidence": null
+    }
+  },
+  "sdkRaw": {
+    "results": {
+      "pulseRate": {
+        "value": 91,
+        "confidenceLevel": 1
+      },
+      "respirationRate": {
+        "value": 23,
+        "confidenceLevel": 3
+      },
+      "bloodPressure": {
+        "value": {
+          "systolic": 123,
+          "diastolic": 82
+        }
+      },
+      "prq": {
+        "value": 4,
+        "confidenceLevel": 1
+      },
+      "wellnessLevel": {
+        "value": 2
+      },
+      "wellnessIndex": {
+        "value": 6
+      },
+      "hemoglobin": {
+        "value": 12.9
+      },
+      "hemoglobinA1c": {
+        "value": 5.54
+      },
+      "highHemoglobinA1CRisk": {
+        "value": 1
+      },
+      "highBloodPressureRisk": {
+        "value": 1
+      },
+      "highFastingGlucoseRisk": {
+        "value": 3
+      },
+      "highTotalCholesterolRisk": {
+        "value": 1
+      },
+      "lowHemoglobinRisk": {
+        "value": 1
+      },
+      "heartAge": {
+        "value": 34
+      },
+      "ascvdRisk": {
+        "value": 3
+      },
+      "ascvdRiskLevel": {
+        "value": 1
+      },
+      "cardiacWorkload": {
+        "value": 4.05
+      },
+      "meanArterialPressure": {
+        "value": 95
+      },
+      "pulsePressure": {
+        "value": 41
+      }
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "takenAt": "2026-02-26T20:13:41.627Z",
+  "source": "web_sdk",
+  "metrics": {
+    "pulseRate": {
+      "value": 76,
+      "unit": "bpm",
+      "confidence": null
+    },
+    "respirationRate": {
+      "value": 18,
+      "unit": "breaths_per_min",
+      "confidence": null
+    },
+    "stressLevel": {
+      "value": 3,
+      "unit": "ratio",
+      "confidence": null
+    },
+    "sdnn": {
+      "value": 34,
+      "unit": "ms",
+      "confidence": null
+    },
+    "bloodPressure": {
+      "systolic": null,
+      "diastolic": null,
+      "unit": "mmHg",
+      "confidence": null
+    }
+  },
+  "sdkRaw": {
+    "results": {
+      "pulseRate": {
+        "value": 76,
+        "confidenceLevel": 2
+      },
+      "respirationRate": {
+        "value": 18,
+        "confidenceLevel": 3
+      },
+      "sdnn": {
+        "value": 34,
+        "confidenceLevel": 2
+      },
+      "stressLevel": {
+        "value": 3
+      },
+      "stressIndex": {
+        "value": 218
+      },
+      "meanRri": {
+        "value": 783,
+        "confidenceLevel": 2
+      },
+      "rmssd": {
+        "value": 41
+      },
+      "prq": {
+        "value": 4.3,
+        "confidenceLevel": 2
+      },
+      "wellnessLevel": {
+        "value": 2
+      },
+      "wellnessIndex": {
+        "value": 6
+      },
+      "normalizedStressIndex": {
+        "value": 35
+      }
+    }
+  }
+}

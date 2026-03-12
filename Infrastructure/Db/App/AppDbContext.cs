@@ -22,6 +22,8 @@ public partial class AppDbContext : DbContext
     public DbSet<UserEntity> Users => Set<UserEntity>();
     public DbSet<UserProfileEntity> UserProfiles => Set<UserProfileEntity>();
     public DbSet<StatEventEntity> StatEvents => Set<StatEventEntity>();
+    public DbSet<UserRppgScanEntity> UserRppgScans => Set<UserRppgScanEntity>();
+    public DbSet<UserRppgScanResultItemEntity> UserRppgScanResultItems => Set<UserRppgScanResultItemEntity>();
 
 
     protected override void OnModelCreating(ModelBuilder builder)

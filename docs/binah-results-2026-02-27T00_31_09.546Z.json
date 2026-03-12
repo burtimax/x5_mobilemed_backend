@@ -1,0 +1,90 @@
+{
+  "takenAt": "2026-02-27T00:31:09.545Z",
+  "source": "web_sdk",
+  "metrics": {
+    "pulseRate": {
+      "value": 82,
+      "unit": "bpm",
+      "confidence": null
+    },
+    "respirationRate": {
+      "value": 25,
+      "unit": "breaths_per_min",
+      "confidence": null
+    },
+    "stressLevel": {
+      "value": null,
+      "unit": "ratio",
+      "confidence": null
+    },
+    "sdnn": {
+      "value": null,
+      "unit": "ms",
+      "confidence": null
+    },
+    "bloodPressure": {
+      "systolic": 129,
+      "diastolic": 84,
+      "unit": "mmHg",
+      "confidence": null
+    }
+  },
+  "sdkRaw": {
+    "results": {
+      "pulseRate": {
+        "value": 82,
+        "confidenceLevel": 1
+      },
+      "respirationRate": {
+        "value": 25,
+        "confidenceLevel": 3
+      },
+      "bloodPressure": {
+        "value": {
+          "systolic": 129,
+          "diastolic": 84
+        }
+      },
+      "prq": {
+        "value": 3.2,
+        "confidenceLevel": 1
+      },
+      "wellnessLevel": {
+        "value": 2
+      },
+      "wellnessIndex": {
+        "value": 7
+      },
+      "hemoglobin": {
+        "value": 14
+      },
+      "hemoglobinA1c": {
+        "value": 5.6
+      },
+      "highHemoglobinA1CRisk": {
+        "value": 1
+      },
+      "highBloodPressureRisk": {
+        "value": 2
+      },
+      "highFastingGlucoseRisk": {
+        "value": 1
+      },
+      "highTotalCholesterolRisk": {
+        "value": 2
+      },
+      "lowHemoglobinRisk": {
+        "value": 1
+      },
+      "cardiacWorkload": {
+        "value": 4.02
+      },
+      "meanArterialPressure": {
+        "value": 99
+      },
+      "pulsePressure": {
+        "value": 45
+      }
+    }
+  }
+}

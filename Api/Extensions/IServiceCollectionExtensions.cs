@@ -3,6 +3,7 @@ using Application.Extensions;
 using Application.Services.BootstrapDatabase;
 using Application.Services.Email;
 using Application.Services.Llm;
+using Application.Services.RppgScan;
 using Application.Services.StatEvent;
 using Application.Services.User;
 using Application.Utils;
@@ -41,6 +42,7 @@ public static class IServiceCollectionExtensions
         services.AddScoped<IUserService, UserService>();
 
         services.AddScoped<IStatEventService, StatEventService>();
+        services.AddScoped<IRppgScanService, RppgScanService>();
         services.AddScoped<IDatabaseBootstrap, DatabaseBootstrap>();
 
         services.AddScoped<ILlmService, LlmService>();

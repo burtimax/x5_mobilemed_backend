@@ -51,6 +51,8 @@ public partial class AppDbContext
         builder.Entity<StatEventEntity>().ToTable("stat_events", statSchema);
         builder.Entity<UserRppgScanEntity>().ToTable("user_rppg_scans", appSchema);
         builder.Entity<UserRppgScanResultItemEntity>().ToTable("user_rppg_scan_result_items", appSchema);
+        builder.Entity<ExcludeProductEntity>().ToTable("exclude_products", appSchema);
+        builder.Entity<UserExcludeProductEntity>().ToTable("user_exclude_products", appSchema);
     }
 
     /// <summary>
@@ -114,5 +116,17 @@ public partial class AppDbContext
             .WithMany(s => s.ResultItems)
             .HasForeignKey(i => i.ScanId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Настройка связи UserExcludeProductEntity -> UserEntity
+        builder.Entity<UserExcludeProductEntity>()
+            .HasOne(e => e.User)
+            .WithMany()
+            .HasForeignKey(e => e.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Уникальность пары пользователь + продукт
+        builder.Entity<UserExcludeProductEntity>()
+            .HasIndex(e => new { e.UserId, e.ExcludeProduct })
+            .IsUnique();
     }
 }

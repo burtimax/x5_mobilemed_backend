@@ -6,6 +6,7 @@ using Application.Services.Llm;
 using Application.Services.RppgScan;
 using Application.Services.StatEvent;
 using Application.Services.User;
+using Application.Services.UserExcludeProducts;
 using Application.Utils;
 using Infrastructure.Db.App;
 using Infrastructure.Db.App.Entities;
@@ -40,6 +41,7 @@ public static class IServiceCollectionExtensions
     {
         services.AddJwt(configuration);
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IUserExcludeProductsService, UserExcludeProductsService>();
 
         services.AddScoped<IStatEventService, StatEventService>();
         services.AddScoped<IRppgScanService, RppgScanService>();

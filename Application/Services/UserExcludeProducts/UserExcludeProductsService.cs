@@ -1,0 +1,81 @@
+using Infrastructure.Db.App;
+using Infrastructure.Db.App.Entities;
+using Infrastructure.Models;
+using Microsoft.EntityFrameworkCore;
+using Shared.Extensions;
+
+namespace Application.Services.UserExcludeProducts;
+
+/// <summary>
+/// Сервис для работы с продуктами-исключениями пользователя.
+/// </summary>
+public class UserExcludeProductsService : IUserExcludeProductsService
+{
+    private readonly AppDbContext _db;
+
+    public UserExcludeProductsService(AppDbContext db)
+    {
+        _db = db;
+    }
+
+    /// <inheritdoc />
+    public async Task<PagedList<ExcludeProductEntity>> GetExcludeProductsAsync(
+        string? search,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellation)
+    {
+        var query = _db.ExcludeProducts.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchPattern = search.ToILikePattern();
+            query = query.Where(p => EF.Functions.ILike(p.ProductName, searchPattern));
+        }
+
+        query = query.OrderBy(p => p.ProductName);
+
+        return await PagedList<ExcludeProductEntity>.ToPagedListAsync(query, pageNumber, pageSize);
+    }
+
+    /// <inheritdoc />
+    public async Task<int> AddUserExcludeProductsAsync(
+        Guid userId,
+        IReadOnlyList<string> products,
+        CancellationToken cancellation)
+    {
+        if (products.Count == 0)
+            return 0;
+
+        var normalizedProducts = products
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Select(p => p.Trim())
+            .Distinct()
+            .ToList();
+
+        if (normalizedProducts.Count == 0)
+            return 0;
+
+        var existingProducts = await _db.UserExcludeProducts
+            .Where(e => e.UserId == userId)
+            .Select(e => e.ExcludeProduct)
+            .ToListAsync(cancellation);
+
+        var toAdd = normalizedProducts
+            .Except(existingProducts, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        foreach (var productName in toAdd)
+        {
+            _db.UserExcludeProducts.Add(new UserExcludeProductEntity
+            {
+                UserId = userId,
+                ExcludeProduct = productName
+            });
+        }
+
+        await _db.SaveChangesAsync(cancellation);
+
+        return toAdd.Count;
+    }
+}

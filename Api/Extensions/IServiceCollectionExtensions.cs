@@ -1,5 +1,6 @@
 using System;
 using Application.Extensions;
+using Application.Services.Assortment;
 using Application.Services.BootstrapDatabase;
 using Application.Services.Email;
 using Application.Services.Llm;
@@ -42,6 +43,7 @@ public static class IServiceCollectionExtensions
         services.AddJwt(configuration);
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IUserExcludeProductsService, UserExcludeProductsService>();
+        services.AddScoped<IAssortmentService, AssortmentService>();
 
         services.AddScoped<IStatEventService, StatEventService>();
         services.AddScoped<IRppgScanService, RppgScanService>();

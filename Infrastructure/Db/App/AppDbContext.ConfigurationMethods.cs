@@ -2,8 +2,10 @@ using System.Linq.Expressions;
 using Infrastructure.Db.App.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Shared.Extensions;
 
 namespace Infrastructure.Db.App;
@@ -53,6 +55,10 @@ public partial class AppDbContext
         builder.Entity<UserRppgScanResultItemEntity>().ToTable("user_rppg_scan_result_items", appSchema);
         builder.Entity<ExcludeProductEntity>().ToTable("exclude_products", appSchema);
         builder.Entity<UserExcludeProductEntity>().ToTable("user_exclude_products", appSchema);
+
+        // X5 схема
+        builder.Entity<ProductEntity>().ToTable("products", x5Schema);
+        builder.Entity<CategoryEntity>().ToTable("categories", x5Schema);
     }
 
     /// <summary>
@@ -128,5 +134,46 @@ public partial class AppDbContext
         builder.Entity<UserExcludeProductEntity>()
             .HasIndex(e => new { e.UserId, e.ExcludeProduct })
             .IsUnique();
+
+        // Связь ProductEntity -> CategoryEntity
+        builder.Entity<ProductEntity>()
+            .HasOne(p => p.Category)
+            .WithMany(c => c.Products)
+            .HasForeignKey(p => p.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Связь CategoryEntity -> CategoryEntity (самоссылка)
+        builder.Entity<CategoryEntity>()
+            .HasOne(c => c.Parent)
+            .WithMany(c => c.Children)
+            .HasForeignKey(c => c.ParentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Уникальность PLU
+        builder.Entity<ProductEntity>()
+            .HasIndex(p => p.Plu)
+            .IsUnique();
+
+        // JSON-конвертация для ProductEntity
+        builder.Entity<ProductEntity>()
+            .Property(p => p.Images)
+            .HasConversion(ProductEntityJsonConverters.ImagesConverter)
+            .HasColumnType("jsonb");
+        builder.Entity<ProductEntity>()
+            .Property(p => p.Images)
+            .Metadata.SetValueComparer(new ValueComparer<List<string>>(
+                (c1, c2) => (c1 == null && c2 == null) || (c1 != null && c2 != null && c1.SequenceEqual(c2)),
+                c => c == null ? 0 : c.Aggregate(0, (acc, val) => HashCode.Combine(acc, val != null ? val.GetHashCode() : 0)),
+                c => c == null ? new List<string>() : new List<string>(c)));
+        builder.Entity<ProductEntity>()
+            .Property(p => p.Features)
+            .HasConversion(ProductEntityJsonConverters.FeaturesConverter)
+            .HasColumnType("jsonb");
+        builder.Entity<ProductEntity>()
+            .Property(p => p.Features)
+            .Metadata.SetValueComparer(new ValueComparer<List<ProductFeatureDto>>(
+                (c1, c2) => (c1 == null && c2 == null) || (c1 != null && c2 != null && c1.SequenceEqual(c2)),
+                c => c == null ? 0 : c.Aggregate(0, (acc, val) => HashCode.Combine(acc, val != null ? val.GetHashCode() : 0)),
+                c => c == null ? new List<ProductFeatureDto>() : new List<ProductFeatureDto>(c)));
     }
 }

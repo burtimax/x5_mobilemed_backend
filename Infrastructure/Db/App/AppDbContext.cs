@@ -12,6 +12,7 @@ public partial class AppDbContext : DbContext
     private const string tenantSchema = "tenant";
     private const string pipelineSchema = "pipeline";
     private const string statSchema = "stat";
+    private const string x5Schema = "x5";
 
     public AppDbContext() { }
 
@@ -26,6 +27,8 @@ public partial class AppDbContext : DbContext
     public DbSet<UserRppgScanResultItemEntity> UserRppgScanResultItems => Set<UserRppgScanResultItemEntity>();
     public DbSet<ExcludeProductEntity> ExcludeProducts => Set<ExcludeProductEntity>();
     public DbSet<UserExcludeProductEntity> UserExcludeProducts => Set<UserExcludeProductEntity>();
+    public DbSet<ProductEntity> Products => Set<ProductEntity>();
+    public DbSet<CategoryEntity> Categories => Set<CategoryEntity>();
 
 
     protected override void OnModelCreating(ModelBuilder builder)

@@ -49,8 +49,8 @@ public static class IServiceCollectionExtensions
         services.AddScoped<IRppgScanService, RppgScanService>();
         services.AddScoped<IDatabaseBootstrap, DatabaseBootstrap>();
 
-        services.AddScoped<ILlmService, LlmService>();
-        services.AddScoped<IEmailService, EmailService>();
+        //services.AddScoped<ILlmService, LlmService>();
+        //services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
         services.AddScoped<SetByUserIdInterceptor>();
     }
@@ -60,16 +60,6 @@ public static class IServiceCollectionExtensions
         AppConfiguration config = configuration.Get<AppConfiguration>();
         if(config == null) throw new NullReferenceException(nameof(config));
         services.AddSingleton(config);
-
-        // Регистрация FileUploadConfiguration
-        var fileUploadConfig = configuration.GetSection(FileUploadConfiguration.Section).Get<FileUploadConfiguration>();
-        if(fileUploadConfig == null) throw new NullReferenceException(nameof(FileUploadConfiguration));
-        services.AddSingleton(fileUploadConfig);
-
-        // Регистрация ProxyConfiguration
-        var proxyConfig = configuration.GetSection(ProxyConfiguration.Section).Get<ProxyConfiguration>();
-        if(proxyConfig == null) proxyConfig = new ProxyConfiguration(); // Опциональная конфигурация
-        services.AddSingleton(proxyConfig);
 
         return config;
     }

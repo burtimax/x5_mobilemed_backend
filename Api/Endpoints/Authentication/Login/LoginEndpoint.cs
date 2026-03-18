@@ -20,8 +20,8 @@ sealed public class LoginEndpoint : Endpoint<LoginRequest, LoginResponse>
         Group<AuthGroupEndpoints>();
         Summary(s =>
         {
-            s.Summary = "Авторизация пользователя по email и паролю";
-            s.Description = "Авторизует пользователя по email и паролю. Возвращает JWT токен для дальнейшей работы с API.";
+            s.Summary = "Авторизация пользователя по ИД сессии";
+            s.Description = "";
         });
     }
 

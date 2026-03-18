@@ -59,6 +59,8 @@ public class DatabaseBootstrap : IDatabaseBootstrap
             var biomarker = new BiomarkerEntity
             {
                 Key = dto.Key,
+                Name = dto.Name,
+                Unit = dto.Unit,
                 Description = dto.Description,
                 DescriptionUser = dto.DescriptionUser
             };

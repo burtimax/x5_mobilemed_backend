@@ -7,6 +7,8 @@ namespace Application.Services.BootstrapDatabase;
 /// </summary>
 internal record BiomarkerSeedDto(
     string Key,
+    string Name,
+    string? Unit,
     string Description,
     [property: JsonPropertyName("descriptionUser")] string DescriptionUser,
     List<BiomarkerScaleSeedDto> Scales

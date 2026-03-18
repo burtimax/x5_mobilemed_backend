@@ -22,6 +22,20 @@ public class BiomarkerEntity
     public required string Key { get; set; }
 
     /// <summary>
+    /// Название показателя.
+    /// </summary>
+    [Comment("Название показателя")]
+    [MaxLength(128)]
+    public required string Name { get; set; }
+
+    /// <summary>
+    /// Единица измерения.
+    /// </summary>
+    [Comment("Единица измерения")]
+    [MaxLength(32)]
+    public string? Unit { get; set; }
+
+    /// <summary>
     /// Техническое описание параметра.
     /// </summary>
     [Comment("Техническое описание параметра")]

@@ -52,6 +52,19 @@ namespace Infrastructure.Db.App.Migrations
                         .HasColumnName("key")
                         .HasComment("Уникальный ключ биомаркера");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("name")
+                        .HasComment("Название показателя");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("unit")
+                        .HasComment("Единица измерения");
+
                     b.HasKey("Id")
                         .HasName("pk_biomarkers");
 

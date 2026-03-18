@@ -23,6 +23,177 @@ namespace Infrastructure.Db.App.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.BiomarkerEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id")
+                        .HasComment("Идентификатор биомаркера");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description")
+                        .HasComment("Техническое описание параметра");
+
+                    b.Property<string>("DescriptionUser")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description_user")
+                        .HasComment("Описание для пользователя");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("key")
+                        .HasComment("Уникальный ключ биомаркера");
+
+                    b.HasKey("Id")
+                        .HasName("pk_biomarkers");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("biomarkers", "biomarker");
+                });
+
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.BiomarkerScaleEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id")
+                        .HasComment("Идентификатор шкалы");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AgeFrom")
+                        .HasColumnType("integer")
+                        .HasColumnName("age_from")
+                        .HasComment("Возраст от (лет)");
+
+                    b.Property<int>("AgeTo")
+                        .HasColumnType("integer")
+                        .HasColumnName("age_to")
+                        .HasComment("Возраст до (лет)");
+
+                    b.Property<int>("BiomarkerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("biomarker_id")
+                        .HasComment("Идентификатор биомаркера");
+
+                    b.Property<int>("GenderFrom")
+                        .HasColumnType("integer")
+                        .HasColumnName("gender_from")
+                        .HasComment("Пол от (0=женщина, 1=мужчина)");
+
+                    b.Property<int>("GenderTo")
+                        .HasColumnType("integer")
+                        .HasColumnName("gender_to")
+                        .HasComment("Пол до (0=женщина, 1=мужчина)");
+
+                    b.Property<bool>("RelativeToAge")
+                        .HasColumnType("boolean")
+                        .HasColumnName("relative_to_age")
+                        .HasComment("Интерпретация относительно возраста пользователя");
+
+                    b.Property<decimal>("ValueFrom")
+                        .HasPrecision(12, 4)
+                        .HasColumnType("numeric(12,4)")
+                        .HasColumnName("value_from")
+                        .HasComment("Значение параметра от");
+
+                    b.Property<decimal>("ValueTo")
+                        .HasPrecision(12, 4)
+                        .HasColumnType("numeric(12,4)")
+                        .HasColumnName("value_to")
+                        .HasComment("Значение параметра до");
+
+                    b.Property<decimal>("WeightFrom")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)")
+                        .HasColumnName("weight_from")
+                        .HasComment("Вес от (кг)");
+
+                    b.Property<decimal>("WeightTo")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)")
+                        .HasColumnName("weight_to")
+                        .HasComment("Вес до (кг)");
+
+                    b.HasKey("Id")
+                        .HasName("pk_biomarker_scales");
+
+                    b.HasIndex("BiomarkerId")
+                        .HasDatabaseName("ix_biomarker_scales_biomarker_id");
+
+                    b.ToTable("biomarker_scales", "biomarker");
+                });
+
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.BiomarkerZoneEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id")
+                        .HasComment("Идентификатор зоны");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BiomarkerScaleId")
+                        .HasColumnType("integer")
+                        .HasColumnName("biomarker_scale_id")
+                        .HasComment("Идентификатор шкалы");
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("comment")
+                        .HasComment("Комментарий к зоне");
+
+                    b.Property<string>("CommentUser")
+                        .HasColumnType("text")
+                        .HasColumnName("comment_user")
+                        .HasComment("Комментарий к зоне для пользователя");
+
+                    b.Property<string>("Rule")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("rule")
+                        .HasComment("Правило интерпретации (для relativeToAge)");
+
+                    b.Property<decimal?>("ValueFrom")
+                        .HasPrecision(12, 4)
+                        .HasColumnType("numeric(12,4)")
+                        .HasColumnName("value_from")
+                        .HasComment("Начало диапазона значения");
+
+                    b.Property<decimal?>("ValueTo")
+                        .HasPrecision(12, 4)
+                        .HasColumnType("numeric(12,4)")
+                        .HasColumnName("value_to")
+                        .HasComment("Конец диапазона значения");
+
+                    b.Property<string>("ZoneKey")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("zone_key")
+                        .HasComment("Ключ зоны (red/yellow/green)");
+
+                    b.HasKey("Id")
+                        .HasName("pk_biomarker_zones");
+
+                    b.HasIndex("BiomarkerScaleId")
+                        .HasDatabaseName("ix_biomarker_zones_biomarker_scale_id");
+
+                    b.ToTable("biomarker_zones", "biomarker");
+                });
+
             modelBuilder.Entity("Infrastructure.Db.App.Entities.CategoryEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -674,6 +845,30 @@ namespace Infrastructure.Db.App.Migrations
                     b.ToTable("user_rppg_scan_result_items", "app");
                 });
 
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.BiomarkerScaleEntity", b =>
+                {
+                    b.HasOne("Infrastructure.Db.App.Entities.BiomarkerEntity", "Biomarker")
+                        .WithMany("Scales")
+                        .HasForeignKey("BiomarkerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_biomarker_scales_biomarkers_biomarker_id");
+
+                    b.Navigation("Biomarker");
+                });
+
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.BiomarkerZoneEntity", b =>
+                {
+                    b.HasOne("Infrastructure.Db.App.Entities.BiomarkerScaleEntity", "BiomarkerScale")
+                        .WithMany("Zones")
+                        .HasForeignKey("BiomarkerScaleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_biomarker_zones_biomarker_scales_biomarker_scale_id");
+
+                    b.Navigation("BiomarkerScale");
+                });
+
             modelBuilder.Entity("Infrastructure.Db.App.Entities.CategoryEntity", b =>
                 {
                     b.HasOne("Infrastructure.Db.App.Entities.CategoryEntity", "Parent")
@@ -855,6 +1050,16 @@ namespace Infrastructure.Db.App.Migrations
                     b.Navigation("Scan");
 
                     b.Navigation("UpdatedBy");
+                });
+
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.BiomarkerEntity", b =>
+                {
+                    b.Navigation("Scales");
+                });
+
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.BiomarkerScaleEntity", b =>
+                {
+                    b.Navigation("Zones");
                 });
 
             modelBuilder.Entity("Infrastructure.Db.App.Entities.CategoryEntity", b =>

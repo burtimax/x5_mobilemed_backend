@@ -59,6 +59,11 @@ public partial class AppDbContext
         // X5 схема
         builder.Entity<ProductEntity>().ToTable("products", x5Schema);
         builder.Entity<CategoryEntity>().ToTable("categories", x5Schema);
+
+        // Биомаркеры и зоны интерпретации
+        builder.Entity<BiomarkerEntity>().ToTable("biomarkers", biomarkerSchema);
+        builder.Entity<BiomarkerScaleEntity>().ToTable("biomarker_scales", biomarkerSchema);
+        builder.Entity<BiomarkerZoneEntity>().ToTable("biomarker_zones", biomarkerSchema);
     }
 
     /// <summary>
@@ -152,6 +157,23 @@ public partial class AppDbContext
         // Уникальность PLU
         builder.Entity<ProductEntity>()
             .HasIndex(p => p.Plu)
+            .IsUnique();
+
+        // Biomarker -> BiomarkerScale -> BiomarkerZone
+        builder.Entity<BiomarkerScaleEntity>()
+            .HasOne(s => s.Biomarker)
+            .WithMany(b => b.Scales)
+            .HasForeignKey(s => s.BiomarkerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<BiomarkerZoneEntity>()
+            .HasOne(z => z.BiomarkerScale)
+            .WithMany(s => s.Zones)
+            .HasForeignKey(z => z.BiomarkerScaleId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<BiomarkerEntity>()
+            .HasIndex(b => b.Key)
             .IsUnique();
 
         // JSON-конвертация для ProductEntity

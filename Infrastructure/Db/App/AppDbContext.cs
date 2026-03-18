@@ -7,10 +7,8 @@ namespace Infrastructure.Db.App;
 
 public partial class AppDbContext : DbContext
 {
-    private const string identitySchema= "identity";
     private const string appSchema = "app";
-    private const string tenantSchema = "tenant";
-    private const string pipelineSchema = "pipeline";
+    private const string biomarkerSchema = "biomarker";
     private const string statSchema = "stat";
     private const string x5Schema = "x5";
 
@@ -29,6 +27,9 @@ public partial class AppDbContext : DbContext
     public DbSet<UserExcludeProductEntity> UserExcludeProducts => Set<UserExcludeProductEntity>();
     public DbSet<ProductEntity> Products => Set<ProductEntity>();
     public DbSet<CategoryEntity> Categories => Set<CategoryEntity>();
+    public DbSet<BiomarkerEntity> Biomarkers => Set<BiomarkerEntity>();
+    public DbSet<BiomarkerScaleEntity> BiomarkerScales => Set<BiomarkerScaleEntity>();
+    public DbSet<BiomarkerZoneEntity> BiomarkerZones => Set<BiomarkerZoneEntity>();
 
 
     protected override void OnModelCreating(ModelBuilder builder)

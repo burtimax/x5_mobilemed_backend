@@ -22,8 +22,8 @@ sealed class SaveRppgScanEndpoint : Endpoint<SaveRppgScanRequest, Result<UserRpp
 
     public override void Configure()
     {
-        Post("rppg-scan");
-        Group<AppGroupEndpoints>();
+        Post("save-rppg");
+        Group<ScanGroupEndpoints>();
         Summary(s =>
         {
             s.Summary = "Сохранение результата сканирования Rppg";

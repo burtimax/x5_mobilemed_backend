@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Db.App.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260312170349_AddExcludeProductsTables")]
-    partial class AddExcludeProductsTables
+    [Migration("20260318182659_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,6 +25,207 @@ namespace Infrastructure.Db.App.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.BiomarkerEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id")
+                        .HasComment("Идентификатор биомаркера");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description")
+                        .HasComment("Техническое описание параметра");
+
+                    b.Property<string>("DescriptionUser")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description_user")
+                        .HasComment("Описание для пользователя");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("key")
+                        .HasComment("Уникальный ключ биомаркера");
+
+                    b.HasKey("Id")
+                        .HasName("pk_biomarkers");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("biomarkers", "biomarker");
+                });
+
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.BiomarkerScaleEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id")
+                        .HasComment("Идентификатор шкалы");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AgeFrom")
+                        .HasColumnType("integer")
+                        .HasColumnName("age_from")
+                        .HasComment("Возраст от (лет)");
+
+                    b.Property<int>("AgeTo")
+                        .HasColumnType("integer")
+                        .HasColumnName("age_to")
+                        .HasComment("Возраст до (лет)");
+
+                    b.Property<int>("BiomarkerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("biomarker_id")
+                        .HasComment("Идентификатор биомаркера");
+
+                    b.Property<int>("GenderFrom")
+                        .HasColumnType("integer")
+                        .HasColumnName("gender_from")
+                        .HasComment("Пол от (0=женщина, 1=мужчина)");
+
+                    b.Property<int>("GenderTo")
+                        .HasColumnType("integer")
+                        .HasColumnName("gender_to")
+                        .HasComment("Пол до (0=женщина, 1=мужчина)");
+
+                    b.Property<bool>("RelativeToAge")
+                        .HasColumnType("boolean")
+                        .HasColumnName("relative_to_age")
+                        .HasComment("Интерпретация относительно возраста пользователя");
+
+                    b.Property<decimal>("ValueFrom")
+                        .HasPrecision(12, 4)
+                        .HasColumnType("numeric(12,4)")
+                        .HasColumnName("value_from")
+                        .HasComment("Значение параметра от");
+
+                    b.Property<decimal>("ValueTo")
+                        .HasPrecision(12, 4)
+                        .HasColumnType("numeric(12,4)")
+                        .HasColumnName("value_to")
+                        .HasComment("Значение параметра до");
+
+                    b.Property<decimal>("WeightFrom")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)")
+                        .HasColumnName("weight_from")
+                        .HasComment("Вес от (кг)");
+
+                    b.Property<decimal>("WeightTo")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)")
+                        .HasColumnName("weight_to")
+                        .HasComment("Вес до (кг)");
+
+                    b.HasKey("Id")
+                        .HasName("pk_biomarker_scales");
+
+                    b.HasIndex("BiomarkerId")
+                        .HasDatabaseName("ix_biomarker_scales_biomarker_id");
+
+                    b.ToTable("biomarker_scales", "biomarker");
+                });
+
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.BiomarkerZoneEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id")
+                        .HasComment("Идентификатор зоны");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BiomarkerScaleId")
+                        .HasColumnType("integer")
+                        .HasColumnName("biomarker_scale_id")
+                        .HasComment("Идентификатор шкалы");
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("comment")
+                        .HasComment("Комментарий к зоне");
+
+                    b.Property<string>("Rule")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("rule")
+                        .HasComment("Правило интерпретации (для relativeToAge)");
+
+                    b.Property<decimal?>("ValueFrom")
+                        .HasPrecision(12, 4)
+                        .HasColumnType("numeric(12,4)")
+                        .HasColumnName("value_from")
+                        .HasComment("Начало диапазона значения");
+
+                    b.Property<decimal?>("ValueTo")
+                        .HasPrecision(12, 4)
+                        .HasColumnType("numeric(12,4)")
+                        .HasColumnName("value_to")
+                        .HasComment("Конец диапазона значения");
+
+                    b.Property<string>("ZoneKey")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("zone_key")
+                        .HasComment("Ключ зоны (red/yellow/green)");
+
+                    b.HasKey("Id")
+                        .HasName("pk_biomarker_zones");
+
+                    b.HasIndex("BiomarkerScaleId")
+                        .HasDatabaseName("ix_biomarker_zones_biomarker_scale_id");
+
+                    b.ToTable("biomarker_zones", "biomarker");
+                });
+
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.CategoryEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id")
+                        .HasComment("Идентификатор категории");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("image_url")
+                        .HasComment("URL изображения категории");
+
+                    b.Property<int?>("ParentId")
+                        .HasColumnType("integer")
+                        .HasColumnName("parent_id")
+                        .HasComment("Идентификатор родительской категории");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("title")
+                        .HasComment("Название категории");
+
+                    b.HasKey("Id")
+                        .HasName("pk_categories");
+
+                    b.HasIndex("ParentId")
+                        .HasDatabaseName("ix_categories_parent_id");
+
+                    b.ToTable("categories", "x5");
+                });
 
             modelBuilder.Entity("Infrastructure.Db.App.Entities.ExcludeProductEntity", b =>
                 {
@@ -45,6 +246,178 @@ namespace Infrastructure.Db.App.Migrations
                         .HasName("pk_exclude_products");
 
                     b.ToTable("exclude_products", "app");
+                });
+
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.ProductEntity", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id")
+                        .HasComment("Идентификатор товара");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Allergens")
+                        .HasColumnType("text")
+                        .HasColumnName("allergens")
+                        .HasComment("Аллергены");
+
+                    b.Property<string>("Brand")
+                        .HasColumnType("text")
+                        .HasColumnName("brand")
+                        .HasComment("Бренд");
+
+                    b.Property<decimal?>("CarbsGPer100G")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("carbs_gper100_g")
+                        .HasComment("Углеводы на 100 г");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer")
+                        .HasColumnName("category_id")
+                        .HasComment("Идентификатор категории");
+
+                    b.Property<string>("Country")
+                        .HasColumnType("text")
+                        .HasColumnName("country")
+                        .HasComment("Страна производства");
+
+                    b.Property<decimal?>("FatsGPer100G")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("fats_gper100_g")
+                        .HasComment("Жиры на 100 г");
+
+                    b.Property<string>("Features")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasComment("Характеристики товара");
+
+                    b.Property<string>("FullIngrediants")
+                        .HasColumnType("text")
+                        .HasColumnName("full_ingrediants")
+                        .HasComment("Полный состав");
+
+                    b.Property<string>("Images")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("images")
+                        .HasComment("URL изображений товара");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active")
+                        .HasComment("Активен ли товар");
+
+                    b.Property<bool?>("IsAdultContent")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_adult_content")
+                        .HasComment("Контент 18+");
+
+                    b.Property<bool?>("IsAlcohol")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_alcohol")
+                        .HasComment("Содержит алкоголь");
+
+                    b.Property<bool?>("IsTobacco")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_tobacco")
+                        .HasComment("Табачное изделие");
+
+                    b.Property<decimal?>("KcalPer100G")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("kcal_per100_g")
+                        .HasComment("Ккал на 100 г");
+
+                    b.Property<string>("Labels")
+                        .HasColumnType("text")
+                        .HasColumnName("labels")
+                        .HasComment("Метки товара");
+
+                    b.Property<string>("MainIngrediants")
+                        .HasColumnType("text")
+                        .HasColumnName("main_ingrediants")
+                        .HasComment("Основные ингредиенты");
+
+                    b.Property<string>("Manufacturer")
+                        .HasColumnType("text")
+                        .HasColumnName("manufacturer")
+                        .HasComment("Производитель");
+
+                    b.Property<string>("Plu")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("plu")
+                        .HasComment("PLU код товара");
+
+                    b.Property<int?>("Price")
+                        .HasColumnType("integer")
+                        .HasColumnName("price")
+                        .HasComment("Цена в копейках");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer")
+                        .HasColumnName("priority")
+                        .HasComment("Приоритет сортировки");
+
+                    b.Property<string>("ProductType")
+                        .HasColumnType("text")
+                        .HasColumnName("product_type")
+                        .HasComment("Тип продукта");
+
+                    b.Property<decimal?>("ProteinsGPer100G")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("proteins_gper100_g")
+                        .HasComment("Белки на 100 г");
+
+                    b.Property<int?>("Rating")
+                        .HasColumnType("integer")
+                        .HasColumnName("rating")
+                        .HasComment("Рейтинг товара");
+
+                    b.Property<int?>("ShelfLifeDays")
+                        .HasColumnType("integer")
+                        .HasColumnName("shelf_life_days")
+                        .HasComment("Срок годности в днях");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("title")
+                        .HasComment("Название товара");
+
+                    b.Property<string>("UnitName")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("unit_name")
+                        .HasComment("Наименование единицы измерения");
+
+                    b.Property<decimal?>("VolumeMl")
+                        .HasPrecision(14, 3)
+                        .HasColumnType("numeric(14,3)")
+                        .HasColumnName("volume_ml")
+                        .HasComment("Объём в мл");
+
+                    b.Property<int?>("WeightG")
+                        .HasColumnType("integer")
+                        .HasColumnName("weight_g")
+                        .HasComment("Вес в граммах");
+
+                    b.HasKey("Id")
+                        .HasName("pk_products");
+
+                    b.HasIndex("CategoryId")
+                        .HasDatabaseName("ix_products_category_id");
+
+                    b.HasIndex("Plu")
+                        .IsUnique();
+
+                    b.ToTable("products", "x5");
                 });
 
             modelBuilder.Entity("Infrastructure.Db.App.Entities.StatEventEntity", b =>
@@ -470,6 +843,53 @@ namespace Infrastructure.Db.App.Migrations
                     b.ToTable("user_rppg_scan_result_items", "app");
                 });
 
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.BiomarkerScaleEntity", b =>
+                {
+                    b.HasOne("Infrastructure.Db.App.Entities.BiomarkerEntity", "Biomarker")
+                        .WithMany("Scales")
+                        .HasForeignKey("BiomarkerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_biomarker_scales_biomarkers_biomarker_id");
+
+                    b.Navigation("Biomarker");
+                });
+
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.BiomarkerZoneEntity", b =>
+                {
+                    b.HasOne("Infrastructure.Db.App.Entities.BiomarkerScaleEntity", "BiomarkerScale")
+                        .WithMany("Zones")
+                        .HasForeignKey("BiomarkerScaleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_biomarker_zones_biomarker_scales_biomarker_scale_id");
+
+                    b.Navigation("BiomarkerScale");
+                });
+
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.CategoryEntity", b =>
+                {
+                    b.HasOne("Infrastructure.Db.App.Entities.CategoryEntity", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_categories_categories_parent_id");
+
+                    b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.ProductEntity", b =>
+                {
+                    b.HasOne("Infrastructure.Db.App.Entities.CategoryEntity", "Category")
+                        .WithMany("Products")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_products_categories_category_id");
+
+                    b.Navigation("Category");
+                });
+
             modelBuilder.Entity("Infrastructure.Db.App.Entities.StatEventEntity", b =>
                 {
                     b.HasOne("Infrastructure.Db.App.Entities.UserEntity", "CreatedBy")
@@ -628,6 +1048,23 @@ namespace Infrastructure.Db.App.Migrations
                     b.Navigation("Scan");
 
                     b.Navigation("UpdatedBy");
+                });
+
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.BiomarkerEntity", b =>
+                {
+                    b.Navigation("Scales");
+                });
+
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.BiomarkerScaleEntity", b =>
+                {
+                    b.Navigation("Zones");
+                });
+
+            modelBuilder.Entity("Infrastructure.Db.App.Entities.CategoryEntity", b =>
+                {
+                    b.Navigation("Children");
+
+                    b.Navigation("Products");
                 });
 
             modelBuilder.Entity("Infrastructure.Db.App.Entities.UserEntity", b =>

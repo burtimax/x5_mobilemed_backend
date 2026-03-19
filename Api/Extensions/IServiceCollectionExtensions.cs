@@ -47,6 +47,7 @@ public static class IServiceCollectionExtensions
 
         services.AddScoped<IStatEventService, StatEventService>();
         services.AddScoped<IRppgScanService, RppgScanService>();
+        services.AddScoped<IScanTranscriptsService, ScanTranscriptsService>();
         services.AddScoped<IDatabaseBootstrap, DatabaseBootstrap>();
 
         //services.AddScoped<ILlmService, LlmService>();

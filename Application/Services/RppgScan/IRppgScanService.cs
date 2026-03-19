@@ -7,7 +7,7 @@ namespace Application.Services.RppgScan;
 public interface IRppgScanService
 {
     /// <summary>
-    /// Сохраняет результат сканирования Rppg из JSON SDK.
+    /// Сохраняет результат сканирования Rppg из JSON SDK и возвращает с расшифровкой Transcripts.
     /// </summary>
-    Task<UserRppgScanEntity> SaveScanAsync(Guid userId, JsonElement dto, CancellationToken ct = default);
+    Task<SaveRppgSсanResponse> SaveScanAsync(Guid userId, JsonElement dto, CancellationToken ct = default);
 }

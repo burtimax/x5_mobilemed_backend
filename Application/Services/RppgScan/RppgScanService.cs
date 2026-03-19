@@ -2,24 +2,27 @@ using System.Text.Json;
 using Application.Models.RppgScan;
 using Infrastructure.Db.App;
 using Infrastructure.Db.App.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services.RppgScan;
 
 public class RppgScanService : IRppgScanService
 {
     private readonly AppDbContext _db;
+    private readonly IScanTranscriptsService _scanTranscriptsService;
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public RppgScanService(AppDbContext db)
+    public RppgScanService(AppDbContext db, IScanTranscriptsService scanTranscriptsService)
     {
         _db = db;
+        _scanTranscriptsService = scanTranscriptsService;
     }
 
-    public async Task<UserRppgScanEntity> SaveScanAsync(Guid userId, JsonElement sdkResult, CancellationToken ct = default)
+    public async Task<SaveRppgSсanResponse> SaveScanAsync(Guid userId, JsonElement sdkResult, CancellationToken ct = default)
     {
         BinahSdkResultDto? dto;
         try
@@ -40,6 +43,21 @@ public class RppgScanService : IRppgScanService
         await _db.UserRppgScans.AddAsync(scan, ct);
         await _db.SaveChangesAsync(ct);
 
-        return scan;
+        var profile = await _db.UserProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.UserId == userId, ct);
+
+        var transcripts = await _scanTranscriptsService.BuildTranscriptsAsync(
+            items,
+            profile?.Age,
+            profile?.Gender,
+            profile?.Weight,
+            ct);
+
+        return new SaveRppgSсanResponse
+        {
+            Scan = scan,
+            Transcripts = transcripts
+        };
     }
 }

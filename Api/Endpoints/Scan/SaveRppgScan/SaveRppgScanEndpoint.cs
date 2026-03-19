@@ -3,7 +3,6 @@ using Api.Extensions;
 using Application.Models.RppgScan;
 using Application.Services.RppgScan;
 using FastEndpoints;
-using Infrastructure.Db.App.Entities;
 using Shared.Contracts;
 
 namespace Api.Endpoints.App.SaveRppgScan;
@@ -11,7 +10,7 @@ namespace Api.Endpoints.App.SaveRppgScan;
 /// <summary>
 /// Endpoint для сохранения результата сканирования Rppg
 /// </summary>
-sealed class SaveRppgScanEndpoint : Endpoint<SaveRppgScanRequest, Result<UserRppgScanEntity>>
+sealed class SaveRppgScanEndpoint : Endpoint<SaveRppgScanRequest, Result<SaveRppgSсanResponse>>
 {
     private readonly IRppgScanService _rppgScanService;
 
@@ -27,7 +26,7 @@ sealed class SaveRppgScanEndpoint : Endpoint<SaveRppgScanRequest, Result<UserRpp
         Summary(s =>
         {
             s.Summary = "Сохранение результата сканирования Rppg";
-            s.Description = "Сохраняет результат сканирования от Binah SDK. Тело запроса — JSON-объект с полями takenAt, source, metrics, sdkRaw.";
+            s.Description = "Сохраняет результат сканирования от Binah SDK и возвращает с расшифровкой Transcripts. Тело запроса — JSON-объект с полями takenAt, source, metrics, sdkRaw.";
         });
     }
 
@@ -35,9 +34,9 @@ sealed class SaveRppgScanEndpoint : Endpoint<SaveRppgScanRequest, Result<UserRpp
     {
         var userId = HttpContext.TokenData().UserId;
 
-        var scan = await _rppgScanService.SaveScanAsync(userId, req.ScanResult, ct);
+        var response = await _rppgScanService.SaveScanAsync(userId, req.ScanResult, ct);
 
-        await SendAsync(Result.Success(scan), cancellation: ct);
+        await SendAsync(Result.Success(response), cancellation: ct);
     }
 }
 

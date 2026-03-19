@@ -5,12 +5,17 @@ namespace Application.Models.RppgScan;
 public class SaveRppgSсanResponse
 {
     /// <summary>
+    /// Оценка здоровья от 0 до 100.
+    /// </summary>
+    public int? HealthScore { get; set; }
+
+    /// <summary>
     /// Сущность результата сканирования
     /// </summary>
-    public UserRppgScanEntity Scan { get; set; }
+    public UserRppgScanEntity? Scan { get; set; }
 
     /// <summary>
     /// Расшифровка результатов сканирования
     /// </summary>
-    public List<ScanTranscriptItem> Transcripts { get; set; }
+    public List<ScanTranscriptItem>? Transcripts { get; set; }
 }

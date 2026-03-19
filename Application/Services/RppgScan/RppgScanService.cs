@@ -54,8 +54,17 @@ public class RppgScanService : IRppgScanService
             profile?.Weight,
             ct);
 
+        var biomarkerScores = transcripts
+            .Where(t => t.ScaleMetadata != null)
+            .Select(t => t.ScaleMetadata!.BiomarkerScore)
+            .ToList();
+        var healthScore = biomarkerScores.Count > 0
+            ? (int)Math.Round(biomarkerScores.Average())
+            : (int?)null;
+
         return new SaveRppgSсanResponse
         {
+            HealthScore = healthScore,
             Scan = scan,
             Transcripts = transcripts
         };

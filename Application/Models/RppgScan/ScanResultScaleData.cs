@@ -17,7 +17,7 @@ public class ScanResultScaleData
     /// Если показатель в зеленой зоне, тогда 100%
     /// Если показатель меньше зеленой зоны, тогда считаем в процентах от минимума насколько он близок к границе зеленой зоны
     /// </summary>
-    public int BiomarkerPercentage { get; set; }
+    public int BiomarkerScore { get; set; }
 
 
     /// <summary>

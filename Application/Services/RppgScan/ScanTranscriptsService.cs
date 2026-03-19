@@ -313,7 +313,7 @@ public class ScanTranscriptsService : IScanTranscriptsService
         return new ScanResultScaleData
         {
             ValuePercentLabel = valuePercent,
-            BiomarkerPercentage = biomarkerPercentage,
+            BiomarkerScore = biomarkerPercentage,
             Items = items
         };
     }

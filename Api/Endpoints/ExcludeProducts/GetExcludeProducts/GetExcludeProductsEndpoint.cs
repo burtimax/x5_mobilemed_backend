@@ -22,8 +22,8 @@ sealed class GetExcludeProductsEndpoint : Endpoint<GetExcludeProductsRequest, Re
 
     public override void Configure()
     {
-        Get("exclude-products");
-        Group<UserGroupEndpoints>();
+        Get("get");
+        Group<ExcludeProductsGroupEndpoints>();
         Summary(s =>
         {
             s.Summary = "Получение списка продуктов-исключений";

@@ -9,23 +9,23 @@ namespace Api.Endpoints.User.AddUserExcludeProducts;
 /// <summary>
 /// Эндпоинт для добавления пачки продуктов в исключения пользователя.
 /// </summary>
-sealed class AddUserExcludeProductsEndpoint : Endpoint<AddUserExcludeProductsRequest, Result<AddUserExcludeProductsResponse>>
+sealed class SaveUserExcludeProductsEndpoint : Endpoint<AddUserExcludeProductsRequest, Result<AddUserExcludeProductsResponse>>
 {
     private readonly IUserExcludeProductsService _service;
 
-    public AddUserExcludeProductsEndpoint(IUserExcludeProductsService service)
+    public SaveUserExcludeProductsEndpoint(IUserExcludeProductsService service)
     {
         _service = service;
     }
 
     public override void Configure()
     {
-        Post("exclude-products");
-        Group<UserGroupEndpoints>();
+        Post("save-for-user");
+        Group<ExcludeProductsGroupEndpoints>();
         Summary(s =>
         {
-            s.Summary = "Добавление продуктов в исключения";
-            s.Description = "Добавляет пачку продуктов в исключения текущего пользователя";
+            s.Summary = "Сохранение продуктов в исключения";
+            s.Description = "Сохраняет пачку продуктов в исключения текущего пользователя";
         });
     }
 

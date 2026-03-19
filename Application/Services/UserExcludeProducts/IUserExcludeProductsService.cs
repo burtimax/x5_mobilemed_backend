@@ -23,6 +23,16 @@ public interface IUserExcludeProductsService
         CancellationToken cancellation);
 
     /// <summary>
+    /// Получает список всех продуктов-исключений пользователя.
+    /// </summary>
+    /// <param name="userId">Идентификатор пользователя</param>
+    /// <param name="cancellation">Токен отмены</param>
+    /// <returns>Список названий продуктов-исключений</returns>
+    Task<IReadOnlyList<string>> GetUserExcludeProductsAsync(
+        Guid userId,
+        CancellationToken cancellation);
+
+    /// <summary>
     /// Добавляет пачку продуктов в исключения пользователя.
     /// </summary>
     /// <param name="userId">Идентификатор пользователя</param>

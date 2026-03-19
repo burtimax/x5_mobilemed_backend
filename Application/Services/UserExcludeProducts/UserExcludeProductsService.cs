@@ -39,6 +39,19 @@ public class UserExcludeProductsService : IUserExcludeProductsService
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<string>> GetUserExcludeProductsAsync(
+        Guid userId,
+        CancellationToken cancellation)
+    {
+        return await _db.UserExcludeProducts
+            .AsNoTracking()
+            .Where(e => e.UserId == userId)
+            .OrderBy(e => e.ExcludeProduct)
+            .Select(e => e.ExcludeProduct)
+            .ToListAsync(cancellation);
+    }
+
+    /// <inheritdoc />
     public async Task<int> AddUserExcludeProductsAsync(
         Guid userId,
         IReadOnlyList<string> products,

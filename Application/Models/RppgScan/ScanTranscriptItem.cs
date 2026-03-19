@@ -9,6 +9,7 @@ public class ScanTranscriptItem
     /// Значение показателя из результата сканирования.
     /// </summary>
     public decimal Value { get; set; }
+    public string Color { get; set; }
     public string Name { get; set; }
     public string Unit { get; set; }
     public string DescriptionUser { get; set; }

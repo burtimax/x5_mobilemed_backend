@@ -62,6 +62,7 @@ public class ScanTranscriptsService : IScanTranscriptsService
             }
 
             var zones = GetThreeClosestZones(scale, (double)item.Value, age);
+            var matchingZone = GetMatchingZone(zones, (double)item.Value);
             result.Add(new ScanTranscriptItem
             {
                 Key = item.Key,
@@ -69,7 +70,8 @@ public class ScanTranscriptsService : IScanTranscriptsService
                 Name = biomarker.Name,
                 Unit = biomarker.Unit ?? item.Unit ?? string.Empty,
                 DescriptionUser = biomarker.DescriptionUser,
-                CommentUser = GetMatchingZoneCommentUser(zones, (double)item.Value),
+                CommentUser = matchingZone?.CommentUser ?? string.Empty,
+                Color = matchingZone?.ZoneKey ?? string.Empty,
                 ConfidenceLevel = item.ConfidenceLevel ?? 0,
                 Zones = zones,
                 ScaleMetadata = BuildScaleMetadata(zones, item.Value)
@@ -227,20 +229,19 @@ public class ScanTranscriptsService : IScanTranscriptsService
     }
 
     /// <summary>
-    /// Возвращает CommentUser из зоны, в которой находится значение, или из средней зоны (ближайшей).
+    /// Возвращает зону, в которой находится значение, или среднюю зону (ближайшую), если значение вне интервалов.
     /// </summary>
-    private static string GetMatchingZoneCommentUser(List<ScanTranscriptItemZone> zones, double value)
+    private static ScanTranscriptItemZone? GetMatchingZone(List<ScanTranscriptItemZone> zones, double value)
     {
         if (zones == null || zones.Count == 0)
-            return string.Empty;
+            return null;
 
         var matching = zones.FirstOrDefault(z => value >= z.From && value <= z.To);
         if (matching != null)
-            return matching.CommentUser ?? string.Empty;
+            return matching;
 
-        // Значение вне интервалов — берём среднюю зону (ближайшую)
         var centerIndex = zones.Count / 2;
-        return zones[centerIndex].CommentUser ?? string.Empty;
+        return zones[centerIndex];
     }
 
     /// <summary>
@@ -328,6 +329,7 @@ public class ScanTranscriptsService : IScanTranscriptsService
             Unit = item.Unit ?? string.Empty,
             DescriptionUser = string.Empty,
             CommentUser = string.Empty,
+            Color = string.Empty,
             ConfidenceLevel = item.ConfidenceLevel ?? 0,
             Zones = []
         };
@@ -345,6 +347,7 @@ public class ScanTranscriptsService : IScanTranscriptsService
             Unit = biomarker.Unit ?? item.Unit ?? string.Empty,
             DescriptionUser = biomarker.DescriptionUser,
             CommentUser = string.Empty,
+            Color = string.Empty,
             ConfidenceLevel = item.ConfidenceLevel ?? 0,
             Zones = []
         };

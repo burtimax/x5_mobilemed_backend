@@ -69,8 +69,10 @@ public class ScanTranscriptsService : IScanTranscriptsService
                 Name = biomarker.Name,
                 Unit = biomarker.Unit ?? item.Unit ?? string.Empty,
                 DescriptionUser = biomarker.DescriptionUser,
+                CommentUser = GetMatchingZoneCommentUser(zones, (double)item.Value),
                 ConfidenceLevel = item.ConfidenceLevel ?? 0,
-                Zones = zones
+                Zones = zones,
+                ScaleMetadata = BuildScaleMetadata(zones, item.Value)
             });
         }
 
@@ -93,8 +95,8 @@ public class ScanTranscriptsService : IScanTranscriptsService
     }
 
     /// <summary>
-    /// Возвращает 3 ближайшие зоны к значению показателя.
-    /// Если значение вне интервалов — подбирается ближайшая зона.
+    /// Возвращает 3 зоны: зону, в которой находится показатель, и две соседние.
+    /// Если показатель в 1-й зоне — берём зоны 1,2,3. Если в последней — берём 3 предыдущие.
     /// </summary>
     private static List<ScanTranscriptItemZone> GetThreeClosestZones(
         BiomarkerScaleEntity scale,
@@ -106,6 +108,8 @@ public class ScanTranscriptsService : IScanTranscriptsService
             .ToList();
         if (zones.Count == 0)
             return [];
+        if (zones.Count <= 3)
+            return zones.Select(z => MapToTranscriptZone(z, userAge)).ToList();
 
         var withDistance = zones.Select(z =>
         {
@@ -123,9 +127,25 @@ public class ScanTranscriptsService : IScanTranscriptsService
             return (Zone: z, Distance: distance);
         }).ToList();
 
+        // Индекс зоны, в которой значение (distance=0) или ближайшей к нему
+        var centerIndex = withDistance
+            .Select((x, i) => (Index: i, x.Distance))
+            .OrderBy(x => x.Distance)
+            .ThenBy(x => x.Index)
+            .First()
+            .Index;
+
+        // Центральная зона + две соседние; на краях — две с одной стороны
+        int startIndex;
+        if (centerIndex < 2)
+            startIndex = 0;
+        else if (centerIndex > zones.Count - 3)
+            startIndex = zones.Count - 3;
+        else
+            startIndex = centerIndex - 1;
+
         return withDistance
-            //.OrderBy(x => x.Distance)
-            .OrderBy(z => z.Zone.ValueFrom).ToList()
+            .Skip(startIndex)
             .Take(3)
             .Select(x => MapToTranscriptZone(x.Zone, userAge))
             .ToList();
@@ -206,6 +226,98 @@ public class ScanTranscriptsService : IScanTranscriptsService
         return (0, 0);
     }
 
+    /// <summary>
+    /// Возвращает CommentUser из зоны, в которой находится значение, или из средней зоны (ближайшей).
+    /// </summary>
+    private static string GetMatchingZoneCommentUser(List<ScanTranscriptItemZone> zones, double value)
+    {
+        if (zones == null || zones.Count == 0)
+            return string.Empty;
+
+        var matching = zones.FirstOrDefault(z => value >= z.From && value <= z.To);
+        if (matching != null)
+            return matching.CommentUser ?? string.Empty;
+
+        // Значение вне интервалов — берём среднюю зону (ближайшую)
+        var centerIndex = zones.Count / 2;
+        return zones[centerIndex].CommentUser ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Показывает в процентах насколько показатель близко к зелёной зоне.
+    /// В зелёной зоне — 100%. Ниже зелёной — % от минимума до середины зелёной зоны. Выше — % от середины до максимума.
+    /// </summary>
+    private static int ComputeBiomarkerPercentage(
+        List<ScanTranscriptItemZone> zones,
+        double value,
+        double scaleMin,
+        double scaleMax)
+    {
+        var green = zones.FirstOrDefault(z =>
+            string.Equals(z.ZoneKey, "green", StringComparison.OrdinalIgnoreCase));
+        if (green == null)
+            return 0;
+
+        var greenCenter = (green.From + green.To) / 2;
+
+        if (value <= greenCenter)
+        {
+            var distToGreenCenter = greenCenter - scaleMin;
+            if (distToGreenCenter <= 0) return 0;
+            return (int)Math.Round(Math.Clamp((value - scaleMin) / distToGreenCenter * 100, 0, 100));
+        }
+
+        // value > green.To
+        var distFromGreenCenter = scaleMax - greenCenter;
+        if (distFromGreenCenter <= 0) return 0;
+        return (int)Math.Round(Math.Clamp((scaleMax - value) / distFromGreenCenter * 100, 0, 100));
+    }
+
+    /// <summary>
+    /// Формирует данные для отрисовки шкалы здоровья.
+    /// Берём 3 зоны Zones, Min(From) — начало шкалы, Max(To) — конец шкалы.
+    /// По значениям зон вычисляем PercentFrom/PercentTo и формируем Items.
+    /// </summary>
+    private static ScanResultScaleData? BuildScaleMetadata(
+        List<ScanTranscriptItemZone> zones,
+        decimal value)
+    {
+        if (zones == null || zones.Count == 0)
+            return null;
+
+        var scaleMin = zones.Min(z => z.From);
+        var scaleMax = zones.Max(z => z.To);
+        var range = scaleMax - scaleMin;
+
+        if (range <= 0)
+            return null;
+
+        var valueDouble = (double)value;
+        var valuePercent = (int)Math.Round(Math.Clamp(
+            (valueDouble - scaleMin) / range * 100, 0, 100));
+
+        var items = zones
+            .OrderBy(z => z.From)
+            .Select(z => new ScanResultScaleDataItem
+            {
+                From = z.From,
+                To = z.To,
+                PercentFrom = (int)Math.Round(Math.Clamp((z.From - scaleMin) / range * 100, 0, 100)),
+                PercentTo = (int)Math.Round(Math.Clamp((z.To - scaleMin) / range * 100, 0, 100)),
+                Color = z.ZoneKey
+            })
+            .ToList();
+
+        var biomarkerPercentage = ComputeBiomarkerPercentage(zones, valueDouble, scaleMin, scaleMax);
+
+        return new ScanResultScaleData
+        {
+            ValuePercentLabel = valuePercent,
+            BiomarkerPercentage = biomarkerPercentage,
+            Items = items
+        };
+    }
+
     private static ScanTranscriptItem CreateUnknownTranscriptItem(UserRppgScanResultItemEntity item)
     {
         return new ScanTranscriptItem
@@ -215,6 +327,7 @@ public class ScanTranscriptsService : IScanTranscriptsService
             Name = item.Key,
             Unit = item.Unit ?? string.Empty,
             DescriptionUser = string.Empty,
+            CommentUser = string.Empty,
             ConfidenceLevel = item.ConfidenceLevel ?? 0,
             Zones = []
         };
@@ -231,6 +344,7 @@ public class ScanTranscriptsService : IScanTranscriptsService
             Name = biomarker.Name,
             Unit = biomarker.Unit ?? item.Unit ?? string.Empty,
             DescriptionUser = biomarker.DescriptionUser,
+            CommentUser = string.Empty,
             ConfidenceLevel = item.ConfidenceLevel ?? 0,
             Zones = []
         };

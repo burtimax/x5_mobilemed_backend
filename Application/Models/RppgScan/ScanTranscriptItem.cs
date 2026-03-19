@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Application.Models.RppgScan;
 
 public class ScanTranscriptItem
@@ -10,6 +12,7 @@ public class ScanTranscriptItem
     public string Name { get; set; }
     public string Unit { get; set; }
     public string DescriptionUser { get; set; }
+    public string CommentUser { get; set; }
     public int ConfidenceLevel { get; set; }
 
     public ScanResultScaleData ScaleMetadata { get; set; }
@@ -17,5 +20,6 @@ public class ScanTranscriptItem
     /// <summary>
     /// Три ближайшие зоны.
     /// </summary>
+    [JsonIgnore]
     public List<ScanTranscriptItemZone> Zones { get; set; }
 }

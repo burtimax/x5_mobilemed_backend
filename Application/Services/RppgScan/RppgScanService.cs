@@ -2,6 +2,7 @@ using System.Text.Json;
 using Application.Models.RppgScan;
 using Infrastructure.Db.App;
 using Infrastructure.Db.App.Entities;
+using Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services.RppgScan;
@@ -43,9 +44,48 @@ public class RppgScanService : IRppgScanService
         await _db.UserRppgScans.AddAsync(scan, ct);
         await _db.SaveChangesAsync(ct);
 
+        return await BuildSaveRppgScanResponseAsync(scan, items, ct);
+    }
+
+    /// <inheritdoc />
+    public async Task<PagedList<SaveRppgSсanResponse>> GetScansHistoryAsync(
+        Guid userId,
+        int pageNumber,
+        int pageSize,
+        CancellationToken ct = default)
+    {
+        var query = _db.UserRppgScans
+            .AsNoTracking()
+            .Where(s => s.UserId == userId)
+            .OrderByDescending(s => s.CreatedAt);
+
+        var totalCount = await query.CountAsync(ct);
+
+        var scans = await query
+            .Include(s => s.ResultItems)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+
+        var items = new List<SaveRppgSсanResponse>();
+        foreach (var scan in scans)
+        {
+            var response = await BuildSaveRppgScanResponseAsync(scan, scan.ResultItems, ct);
+            items.Add(response);
+        }
+
+        return new PagedList<SaveRppgSсanResponse>(items, totalCount, pageNumber, pageSize);
+    }
+
+    /// <inheritdoc />
+    public async Task<SaveRppgSсanResponse> BuildSaveRppgScanResponseAsync(
+        UserRppgScanEntity scan,
+        IReadOnlyList<UserRppgScanResultItemEntity> items,
+        CancellationToken ct = default)
+    {
         var profile = await _db.UserProfiles
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.UserId == userId, ct);
+            .FirstOrDefaultAsync(p => p.UserId == scan.UserId, ct);
 
         var transcripts = await _scanTranscriptsService.BuildTranscriptsAsync(
             items,

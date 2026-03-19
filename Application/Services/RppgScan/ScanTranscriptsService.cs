@@ -61,7 +61,9 @@ public class ScanTranscriptsService : IScanTranscriptsService
                 continue;
             }
 
-            var zones = GetThreeClosestZones(scale, (double)item.Value, age);
+            var zones = string.Equals(item.Key, "heartAge", StringComparison.OrdinalIgnoreCase)
+                ? BuildHeartAgeZones(scale, age)
+                : GetThreeClosestZones(scale, (double)item.Value);
             var matchingZone = GetMatchingZone(zones, (double)item.Value);
             result.Add(new ScanTranscriptItem
             {
@@ -97,39 +99,65 @@ public class ScanTranscriptsService : IScanTranscriptsService
     }
 
     /// <summary>
+    /// Динамические зоны для heartAge: зелёная (&lt; возраста), жёлтая (возраст — возраст+5), красная (&gt; возраст+5).
+    /// </summary>
+    private static List<ScanTranscriptItemZone> BuildHeartAgeZones(BiomarkerScaleEntity scale, int age)
+    {
+        var comments = scale.Zones
+            .Where(z => z.ZoneKey != null)
+            .ToDictionary(z => z.ZoneKey!, z => z.CommentUser ?? string.Empty);
+
+        return
+        [
+            new ScanTranscriptItemZone
+            {
+                ZoneKey = "green",
+                From = age - 20,
+                To = age - 1e-6,
+                CommentUser = comments.GetValueOrDefault("green", string.Empty),
+                FromToAlias = $"< {age}"
+            },
+            new ScanTranscriptItemZone
+            {
+                ZoneKey = "yellow",
+                From = age,
+                To = age + 5 - 1e-6,
+                CommentUser = comments.GetValueOrDefault("yellow", string.Empty),
+                FromToAlias = $"{age} - {age + 5}"
+            },
+            new ScanTranscriptItemZone
+            {
+                ZoneKey = "red",
+                From = age + 5,
+                To = age + 20,
+                CommentUser = comments.GetValueOrDefault("red", string.Empty),
+                FromToAlias = $"{age + 5} +"
+            }
+        ];
+    }
+
+    /// <summary>
     /// Возвращает 3 зоны: зону, в которой находится показатель, и две соседние.
     /// Если показатель в 1-й зоне — берём зоны 1,2,3. Если в последней — берём 3 предыдущие.
     /// </summary>
-    private static List<ScanTranscriptItemZone> GetThreeClosestZones(
-        BiomarkerScaleEntity scale,
-        double value,
-        int userAge)
+    private static List<ScanTranscriptItemZone> GetThreeClosestZones(BiomarkerScaleEntity scale, double value)
     {
-        var zones = scale.Zones.Where(z => z.ZoneKey != null)
+        var zones = scale.Zones
+            .Where(z => z.ZoneKey != null && z.ValueFrom.HasValue)
             .OrderBy(z => z.ValueFrom)
             .ToList();
         if (zones.Count == 0)
             return [];
         if (zones.Count <= 3)
-            return zones.Select(z => MapToTranscriptZone(z, userAge)).ToList();
+            return zones.Select(MapToTranscriptZone).ToList();
 
         var withDistance = zones.Select(z =>
         {
-            double distance;
-            if (!string.IsNullOrEmpty(z.Rule))
-            {
-                distance = GetDistanceForRuleZone(z, value, userAge);
-            }
-            else
-            {
-                var from = (double)(z.ValueFrom ?? 0m);
-                var to = z.ValueTo.HasValue ? (double)z.ValueTo.Value : double.MaxValue;
-                distance = GetDistanceToInterval(value, from, to);
-            }
-            return (Zone: z, Distance: distance);
+            var from = (double)(z.ValueFrom ?? 0m);
+            var to = z.ValueTo.HasValue ? (double)z.ValueTo.Value : double.MaxValue;
+            return (Zone: z, Distance: GetDistanceToInterval(value, from, to));
         }).ToList();
 
-        // Индекс зоны, в которой значение (distance=0) или ближайшей к нему
         var centerIndex = withDistance
             .Select((x, i) => (Index: i, x.Distance))
             .OrderBy(x => x.Distance)
@@ -137,19 +165,14 @@ public class ScanTranscriptsService : IScanTranscriptsService
             .First()
             .Index;
 
-        // Центральная зона + две соседние; на краях — две с одной стороны
-        int startIndex;
-        if (centerIndex < 2)
-            startIndex = 0;
-        else if (centerIndex > zones.Count - 3)
-            startIndex = zones.Count - 3;
-        else
-            startIndex = centerIndex - 1;
+        int startIndex = centerIndex < 2 ? 0
+            : centerIndex > zones.Count - 3 ? zones.Count - 3
+            : centerIndex - 1;
 
         return withDistance
             .Skip(startIndex)
             .Take(3)
-            .Select(x => MapToTranscriptZone(x.Zone, userAge))
+            .Select(x => MapToTranscriptZone(x.Zone))
             .ToList();
     }
 
@@ -164,68 +187,16 @@ public class ScanTranscriptsService : IScanTranscriptsService
         return value - to;
     }
 
-    /// <summary>
-    /// Расстояние для зоны с Rule (например, heartAge).
-    /// Если зона подходит под правило — 0, иначе — расстояние до границы.
-    /// </summary>
-    private static double GetDistanceForRuleZone(BiomarkerZoneEntity zone, double value, int age)
+    private static ScanTranscriptItemZone MapToTranscriptZone(BiomarkerZoneEntity zone)
     {
-        var rule = zone.Rule ?? string.Empty;
-
-        // heartAge: "value <= age" | "value >= age + 1 && value <= age + 5" | "value > age + 5"
-        if (rule.Contains("value <= age", StringComparison.Ordinal))
-        {
-            if (value <= age) return 0;
-            return value - age;
-        }
-        if (rule.Contains("value >= age + 1") && rule.Contains("value <= age + 5"))
-        {
-            var low = age + 1;
-            var high = age + 5;
-            if (value >= low && value <= high) return 0;
-            if (value < low) return low - value;
-            return value - high;
-        }
-        if (rule.Contains("value > age + 5"))
-        {
-            var boundary = age + 5;
-            if (value > boundary) return 0;
-            return boundary - value;
-        }
-
-        return double.MaxValue; // неизвестное правило — считаем далёкой
-    }
-
-    private static ScanTranscriptItemZone MapToTranscriptZone(BiomarkerZoneEntity zone, int userAge)
-    {
-        double from, to;
-        if (!string.IsNullOrEmpty(zone.Rule))
-        {
-            (from, to) = GetFromToForRule(zone.Rule, userAge);
-        }
-        else
-        {
-            from = (double)(zone.ValueFrom ?? 0m);
-            to = (double)(zone.ValueTo ?? 0m);
-        }
         return new ScanTranscriptItemZone
         {
             ZoneKey = zone.ZoneKey,
-            From = from,
-            To = to,
-            CommentUser = zone.CommentUser ?? string.Empty
+            From = (double)(zone.ValueFrom ?? 0m),
+            To = (double)(zone.ValueTo ?? 0m),
+            CommentUser = zone.CommentUser ?? string.Empty,
+            FromToAlias = zone.FromToAlias ?? string.Empty
         };
-    }
-
-    private static (double From, double To) GetFromToForRule(string rule, int age)
-    {
-        if (rule.Contains("value <= age"))
-            return (0, age);
-        if (rule.Contains("value >= age + 1") && rule.Contains("value <= age + 5"))
-            return (age + 1, age + 5);
-        if (rule.Contains("value > age + 5"))
-            return (age + 5, 120);
-        return (0, 0);
     }
 
     /// <summary>
@@ -305,7 +276,8 @@ public class ScanTranscriptsService : IScanTranscriptsService
                 To = z.To,
                 PercentFrom = (int)Math.Round(Math.Clamp((z.From - scaleMin) / range * 100, 0, 100)),
                 PercentTo = (int)Math.Round(Math.Clamp((z.To - scaleMin) / range * 100, 0, 100)),
-                Color = z.ZoneKey
+                Color = z.ZoneKey,
+                FromToAlias = z.FromToAlias ?? string.Empty
             })
             .ToList();
 

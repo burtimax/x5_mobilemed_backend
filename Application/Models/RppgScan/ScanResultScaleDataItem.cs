@@ -1,4 +1,4 @@
-﻿namespace Application.Models.RppgScan;
+namespace Application.Models.RppgScan;
 
 /// <summary>
 /// Зона шкалы здоровья. Шкала здоровья представляет собой прямой отрезок от 0% до 100%, у отрезка есть зоны (красные, желтые, зеленые)
@@ -12,4 +12,5 @@ public class ScanResultScaleDataItem
     public int PercentFrom { get; set; }
     public int PercentTo { get; set; }
     public string Color { get; set; }
+    public string FromToAlias { get; set; }
 }

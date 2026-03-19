@@ -31,5 +31,6 @@ internal record BiomarkerZoneSeedDto(
     double? To,
     string? Rule,
     string Comment,
-    [property: JsonPropertyName("commentUser")] string? CommentUser
+    [property: JsonPropertyName("commentUser")] string? CommentUser,
+    [property: JsonPropertyName("from_to_alias")] string? FromToAlias
 );

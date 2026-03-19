@@ -17,7 +17,7 @@ public static class MigrateProductsAndCategories
         "Host=127.0.0.1;Port=5432;Database=perekrestok_parsing;Username=postgres;Password=123;Include Error Detail=true";
 
     private const string TargetConnectionString =
-        "Host=127.0.0.1;Port=5432;Database=x5_mobilemed_db;Username=postgres;Password=123;Include Error Detail=true";
+        "Host=127.0.0.1;Port=5432;Database=x5_mobilemed_db_1;Username=postgres;Password=123;Include Error Detail=true";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

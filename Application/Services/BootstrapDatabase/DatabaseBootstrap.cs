@@ -91,7 +91,8 @@ public class DatabaseBootstrap : IDatabaseBootstrap
                         ValueTo = zoneDto.To.HasValue ? (decimal)zoneDto.To.Value : null,
                         Rule = zoneDto.Rule,
                         Comment = zoneDto.Comment,
-                        CommentUser = zoneDto.CommentUser
+                        CommentUser = zoneDto.CommentUser,
+                        FromToAlias = zoneDto.FromToAlias
                     };
                     scale.Zones.Add(zone);
                 }

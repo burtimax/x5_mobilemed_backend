@@ -1,4 +1,4 @@
-﻿namespace Application.Models.RppgScan;
+namespace Application.Models.RppgScan;
 
 public class ScanTranscriptItemZone
 {
@@ -6,4 +6,5 @@ public class ScanTranscriptItemZone
     public double From { get; set; }
     public double To { get; set; }
     public string CommentUser { get; set; }
+    public string FromToAlias { get; set; }
 }

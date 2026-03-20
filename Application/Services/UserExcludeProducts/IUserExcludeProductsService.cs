@@ -33,13 +33,14 @@ public interface IUserExcludeProductsService
         CancellationToken cancellation);
 
     /// <summary>
-    /// Добавляет пачку продуктов в исключения пользователя.
+    /// Сохраняет список продуктов-исключений пользователя (полная перезапись).
+    /// Пустой список после нормализации удаляет все исключения.
     /// </summary>
     /// <param name="userId">Идентификатор пользователя</param>
-    /// <param name="products">Список названий продуктов для добавления</param>
+    /// <param name="products">Полный список названий продуктов-исключений</param>
     /// <param name="cancellation">Токен отмены</param>
-    /// <returns>Количество добавленных продуктов</returns>
-    Task<int> AddUserExcludeProductsAsync(
+    /// <returns>Количество сохранённых продуктов-исключений</returns>
+    Task<int> SaveUserExcludeProductsAsync(
         Guid userId,
         IReadOnlyList<string> products,
         CancellationToken cancellation);

@@ -54,7 +54,31 @@ public static class CategoriesAndProductsToJson
             Products = c.Products.Select(p => MapProduct(p)).ToList()
         }).ToList();
 
+        List<string> excludeFeatures = new List<string>()
+        {
+            "osnovnye-ingredienty",
+            "sostav-polnyi",
+            "sostav",
+            "kkal",
+            "jiry",
+            "belki",
+            "uglevody",
+            "brand",
+            "strana"
+        };
+
+        for (int i = 0; i < dtos.Count; i++)
+        {
+            for (int j = 0; j < dtos[i].Products.Count; j++)
+            {
+                var prod = dtos[i].Products[j];
+                prod.Features = prod.Features.Where(f => !excludeFeatures.Contains(f.Key)).ToList();
+            }
+        }
+
         var json = JsonSerializer.Serialize(dtos, JsonOptions);
+
+
 
         //var fullPath = Path.GetFullPath(path);
         //var dir = Path.GetDirectoryName(fullPath);
@@ -116,7 +140,7 @@ public static class CategoriesAndProductsToJson
         public string? Allergens { get; init; }
         public string? MainIngrediants { get; init; }
         public string? FullIngrediants { get; init; }
-        public List<ProductFeatureDto> Features { get; init; } = [];
+        public List<ProductFeatureDto> Features { get; set; } = [];
         public int? Price { get; init; }
         public string? ProductType { get; init; }
         public string? Manufacturer { get; init; }

@@ -1,12 +1,12 @@
 namespace Application.Models.UserExcludeProducts;
 
 /// <summary>
-/// Ответ на добавление продуктов в исключения.
+/// Ответ на сохранение продуктов-исключений.
 /// </summary>
 public class AddUserExcludeProductsResponse
 {
     /// <summary>
-    /// Количество добавленных продуктов.
+    /// Количество сохранённых продуктов-исключений.
     /// </summary>
     public int AddedCount { get; set; }
 }

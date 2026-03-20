@@ -52,33 +52,25 @@ public class UserExcludeProductsService : IUserExcludeProductsService
     }
 
     /// <inheritdoc />
-    public async Task<int> AddUserExcludeProductsAsync(
+    public async Task<int> SaveUserExcludeProductsAsync(
         Guid userId,
         IReadOnlyList<string> products,
         CancellationToken cancellation)
     {
-        if (products.Count == 0)
-            return 0;
-
         var normalizedProducts = products
             .Where(p => !string.IsNullOrWhiteSpace(p))
             .Select(p => p.Trim())
             .Distinct()
             .ToList();
 
+        await _db.UserExcludeProducts
+            .Where(e => e.UserId == userId)
+            .ExecuteDeleteAsync(cancellation);
+
         if (normalizedProducts.Count == 0)
             return 0;
 
-        var existingProducts = await _db.UserExcludeProducts
-            .Where(e => e.UserId == userId)
-            .Select(e => e.ExcludeProduct)
-            .ToListAsync(cancellation);
-
-        var toAdd = normalizedProducts
-            .Except(existingProducts, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        foreach (var productName in toAdd)
+        foreach (var productName in normalizedProducts)
         {
             _db.UserExcludeProducts.Add(new UserExcludeProductEntity
             {
@@ -89,6 +81,6 @@ public class UserExcludeProductsService : IUserExcludeProductsService
 
         await _db.SaveChangesAsync(cancellation);
 
-        return toAdd.Count;
+        return normalizedProducts.Count;
     }
 }

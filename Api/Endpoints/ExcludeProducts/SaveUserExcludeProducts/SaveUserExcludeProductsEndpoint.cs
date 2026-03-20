@@ -7,7 +7,7 @@ using Shared.Contracts;
 namespace Api.Endpoints.User.AddUserExcludeProducts;
 
 /// <summary>
-/// Эндпоинт для добавления пачки продуктов в исключения пользователя.
+/// Эндпоинт для полного сохранения списка продуктов-исключений пользователя.
 /// </summary>
 sealed class SaveUserExcludeProductsEndpoint : Endpoint<AddUserExcludeProductsRequest, Result<AddUserExcludeProductsResponse>>
 {
@@ -25,14 +25,14 @@ sealed class SaveUserExcludeProductsEndpoint : Endpoint<AddUserExcludeProductsRe
         Summary(s =>
         {
             s.Summary = "Сохранение продуктов в исключения";
-            s.Description = "Сохраняет пачку продуктов в исключения текущего пользователя";
+            s.Description = "Полностью перезаписывает список исключений текущего пользователя; пустой список очищает исключения";
         });
     }
 
     public override async Task HandleAsync(AddUserExcludeProductsRequest req, CancellationToken ct)
     {
         var tokenData = HttpContext.TokenData();
-        var addedCount = await _service.AddUserExcludeProductsAsync(
+        var addedCount = await _service.SaveUserExcludeProductsAsync(
             tokenData.UserId,
             req.Products,
             ct);

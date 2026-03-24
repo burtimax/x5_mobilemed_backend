@@ -61,6 +61,7 @@ public static class CategoriesAndProductsToText
             Id = c.Id,
             Title = c.Title,
             Products = c.Products
+                .Where(p => p.Priority < 100)
                 .OrderBy(p => p.Title)
                 .Select(MapProduct)
                 .ToList()

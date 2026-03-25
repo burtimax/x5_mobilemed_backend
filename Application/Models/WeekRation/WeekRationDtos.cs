@@ -14,6 +14,9 @@ public sealed class WeekRationProductReplaceCandidateDto
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ProductEntity? Product { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Reason { get; set; }
 }
 
 /// <summary>Позиция в списке <see cref="WeekRationMealSlotDto.Food"/>.</summary>

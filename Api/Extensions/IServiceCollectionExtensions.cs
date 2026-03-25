@@ -58,6 +58,7 @@ public static class IServiceCollectionExtensions
         services.AddScoped<IRppgScanReportService, RppgScanReportService>();
         services.AddScoped<IWeekRationGeneratorService, WeekRationGeneratorService>();
         services.AddScoped<IWeekRationPersistenceService, WeekRationPersistenceService>();
+        services.AddScoped<IWeekRationForScanService, WeekRationForScanService>();
         services.AddTransient<GenerateWeekRationJob>();
         services.AddScoped<IScanTranscriptsService, ScanTranscriptsService>();
         services.AddScoped<IDatabaseBootstrap, DatabaseBootstrap>();

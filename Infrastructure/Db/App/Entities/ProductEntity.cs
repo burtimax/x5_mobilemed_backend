@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Db.App.Entities;
@@ -106,6 +107,7 @@ public class ProductEntity
     /// Характеристики товара (ключ, название, отображаемое значение).
     /// </summary>
     [Comment("Характеристики товара")]
+    [JsonIgnore]
     public List<ProductFeatureDto> Features { get; set; } = [];
 
     /// <summary>

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.Logging;
 using ModuleLLM.Configuration;
 using ModuleLLM.Models.OpenRouter;
@@ -130,7 +131,34 @@ public class OpenRouterService : ILlmApiService
                     DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
                 };
 
-                var jsonContent = JsonSerializer.Serialize(request, jsonOptions);
+                JsonNode? bodyNode;
+                try
+                {
+                    bodyNode = JsonSerializer.SerializeToNode(request, jsonOptions);
+                }
+                catch (JsonException ex)
+                {
+                    return Result.Failure<OpenRouterChatResponse>(
+                        $"Не удалось сформировать тело запроса OpenRouter: {ex.Message}");
+                }
+
+                if (bodyNode == null)
+                    return Result.Failure<OpenRouterChatResponse>("Не удалось сформировать тело запроса OpenRouter.");
+
+                if (!string.IsNullOrWhiteSpace(request.ResponseFormatJson))
+                {
+                    try
+                    {
+                        bodyNode["response_format"] = JsonNode.Parse(request.ResponseFormatJson);
+                    }
+                    catch (JsonException ex)
+                    {
+                        return Result.Failure<OpenRouterChatResponse>(
+                            $"Некорректный JSON в {nameof(OpenRouterChatRequest.ResponseFormatJson)}: {ex.Message}");
+                    }
+                }
+
+                var jsonContent = bodyNode.ToJsonString(jsonOptions);
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
                 var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/chat/completions")

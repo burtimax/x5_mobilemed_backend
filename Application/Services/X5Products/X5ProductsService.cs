@@ -90,6 +90,24 @@ public sealed class X5ProductsService : IX5ProductsService
         return sb.ToString();
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyDictionary<long, ProductEntity>> GetProductsByIdsAsync(
+        IReadOnlyCollection<long> productIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (productIds == null || productIds.Count == 0)
+            return new Dictionary<long, ProductEntity>();
+
+        var distinctIds = productIds.Distinct().ToList();
+        var list = await _db.Products
+            .AsNoTracking()
+            .Include(p => p.Category)
+            .Where(p => distinctIds.Contains(p.Id))
+            .ToListAsync(cancellationToken);
+
+        return list.ToDictionary(p => p.Id);
+    }
+
     private static void AppendProduct(StringBuilder sb, ProductExportRow p, int indexInCategory)
     {
         sb.AppendLine($"  [{indexInCategory}] {p.Title}");

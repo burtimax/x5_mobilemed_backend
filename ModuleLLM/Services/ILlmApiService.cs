@@ -1,4 +1,5 @@
 using ModuleLLM.Models.OpenRouter;
+using Shared.Contracts;
 
 namespace ModuleLLM.Services;
 
@@ -14,5 +15,12 @@ public interface ILlmApiService
         string transcription,
         string prompt,
         bool isJsonResponse = true,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Вызов OpenRouter Chat Completions (<c>/chat/completions</c>).
+    /// </summary>
+    Task<Result<OpenRouterChatResponse>> SendChatCompletionAsync(
+        OpenRouterChatRequest request,
         CancellationToken cancellationToken = default);
 }

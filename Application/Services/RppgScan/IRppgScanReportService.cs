@@ -10,4 +10,12 @@ public interface IRppgScanReportService
     /// </summary>
     /// <returns>Текст отчёта или <c>null</c>, если скан не найден.</returns>
     Task<string?> GetReportTextAsync(Guid scanId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// То же, что <see cref="GetReportTextAsync"/>, но только если скан принадлежит <paramref name="userId"/>.
+    /// </summary>
+    Task<string?> GetReportTextForUserAsync(
+        Guid scanId,
+        Guid userId,
+        CancellationToken cancellationToken = default);
 }

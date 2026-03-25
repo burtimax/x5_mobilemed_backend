@@ -19,6 +19,22 @@ public sealed class RppgScanReportService : IRppgScanReportService
     }
 
     /// <inheritdoc />
+    public async Task<string?> GetReportTextForUserAsync(
+        Guid scanId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var owned = await _db.UserRppgScans
+            .AsNoTracking()
+            .AnyAsync(s => s.Id == scanId && s.UserId == userId, cancellationToken);
+
+        if (!owned)
+            return null;
+
+        return await GetReportTextAsync(scanId, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<string?> GetReportTextAsync(Guid scanId, CancellationToken cancellationToken = default)
     {
         var scan = await _db.UserRppgScans

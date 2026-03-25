@@ -24,6 +24,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Application\Application.csproj" />
+      <ProjectReference Include="..\ModuleLLM\ModuleLLM.csproj" />
       <ProjectReference Include="..\ModuleTelegramLogger\ModuleTelegramLogger.csproj" />
       <ProjectReference Include="..\Shared\Shared.csproj" />
     </ItemGroup>

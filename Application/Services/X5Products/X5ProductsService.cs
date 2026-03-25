@@ -4,17 +4,11 @@ using Infrastructure.Db.App;
 using Infrastructure.Db.App.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Scripts.CategoriesAndProductsToText;
+namespace Application.Services.X5Products;
 
-/// <summary>
-/// Экспорт категорий с товарами из AppDbContext в читаемый текстовый файл.
-/// Запуск: dotnet run --project Scripts [строка_подключения] [путь_к_output_txt]
-/// </summary>
-public static class CategoriesAndProductsToText
+/// <inheritdoc cref="IX5ProductsService" />
+public sealed class X5ProductsService : IX5ProductsService
 {
-    private const string DefaultConnectionString =
-        "Host=127.0.0.1;Port=5432;Database=x5_mobilemed_db_1;Username=postgres;Password=123;Include Error Detail=true";
-
     private static readonly string[] ExcludeFeatureKeys =
     [
         "osnovnye-ingredienty",
@@ -28,27 +22,21 @@ public static class CategoriesAndProductsToText
         "strana"
     ];
 
-    public static async Task RunAsync(string? connectionString = null, string? outputPath = null)
+    private readonly AppDbContext _db;
+
+    public X5ProductsService(AppDbContext db)
     {
-        var conn = connectionString ?? DefaultConnectionString;
-        // var path = outputPath ?? Path.Combine(
-        //     AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "docs", "categories_and_products.txt");
+        _db = db;
+    }
 
-        Console.WriteLine("Экспорт категорий с товарами в текст");
-        Console.WriteLine($"БД: {conn.Split(';').FirstOrDefault() ?? "?"}...");
-        Console.WriteLine("Фильтр товаров: Priority < 100");
-
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(conn)
-            .Options;
-
-        await using var ctx = new AppDbContext(options);
-
-        var categories = await ctx.Categories
+    /// <inheritdoc />
+    public async Task<string> GetProductsCatalogTextAsync(CancellationToken cancellationToken = default)
+    {
+        var categories = await _db.Categories
             .AsNoTracking()
             .Include(c => c.Products)
             .OrderBy(c => c.Id)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         var dtos = categories.Select(c => new CategoryWithProductsDto
         {
@@ -61,7 +49,7 @@ public static class CategoriesAndProductsToText
                 .ToList()
         }).ToList();
 
-        dtos = dtos.Where(d => d.Products.Any()).ToList();
+        dtos = dtos.Where(d => d.Products.Count > 0).ToList();
 
         foreach (var cat in dtos)
         {
@@ -99,18 +87,10 @@ public static class CategoriesAndProductsToText
             }
         }
 
-        //var fullPath = Path.GetFullPath(path);
-        // var dir = Path.GetDirectoryName(fullPath);
-        // if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-        //     Directory.CreateDirectory(dir);
-
-        // await File.WriteAllTextAsync(fullPath, sb.ToString(), Encoding.UTF8);
-        var text = sb.ToString();
-        Console.WriteLine($"Категорий: {categories.Count}, товаров: {dtos.Sum(c => c.Products.Count)}");
-        Console.WriteLine($"{text}");
+        return sb.ToString();
     }
 
-    private static void AppendProduct(StringBuilder sb, ProductDto p, int indexInCategory)
+    private static void AppendProduct(StringBuilder sb, ProductExportRow p, int indexInCategory)
     {
         sb.AppendLine($"  [{indexInCategory}] {p.Title}");
         sb.AppendLine($"      ID: {p.Id}    PLU: {p.Plu}");
@@ -135,7 +115,7 @@ public static class CategoriesAndProductsToText
         }
     }
 
-    private static void AppendNutrition(StringBuilder sb, ProductDto p)
+    private static void AppendNutrition(StringBuilder sb, ProductExportRow p)
     {
         var hasAny = p.KcalPer100G.HasValue || p.ProteinsGPer100G.HasValue || p.FatsGPer100G.HasValue
                      || p.CarbsGPer100G.HasValue;
@@ -154,7 +134,7 @@ public static class CategoriesAndProductsToText
         }
     }
 
-    private static string? FormatWeightVolume(ProductDto p)
+    private static string? FormatWeightVolume(ProductExportRow p)
     {
         var parts = new List<string>();
 
@@ -192,7 +172,6 @@ public static class CategoriesAndProductsToText
     private static string NormalizeWhitespace(string s) =>
         string.Join(' ', s.Split((string[]?)null!, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
 
-    /// <summary>Переносы длинного состава для отступа под «Состав:».</summary>
     private static IEnumerable<string> WrapForIndent(string text, int maxLen)
     {
         text = NormalizeWhitespace(text);
@@ -222,7 +201,7 @@ public static class CategoriesAndProductsToText
         }
     }
 
-    private static ProductDto MapProduct(ProductEntity p) => new()
+    private static ProductExportRow MapProduct(ProductEntity p) => new()
     {
         Id = p.Id,
         CategoryId = p.CategoryId,
@@ -253,10 +232,10 @@ public static class CategoriesAndProductsToText
     {
         public int Id { get; init; }
         public string Title { get; init; } = string.Empty;
-        public List<ProductDto> Products { get; init; } = [];
+        public List<ProductExportRow> Products { get; init; } = [];
     }
 
-    private sealed class ProductDto
+    private sealed class ProductExportRow
     {
         public long Id { get; init; }
         public int CategoryId { get; init; }

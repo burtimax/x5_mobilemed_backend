@@ -66,7 +66,7 @@ var services = builder.Services;
 var config = services.AddConfigurations(builder.Configuration);
 services.AddDatabase(config.Database, builder.Environment);
 services.AddServices(builder.Configuration);
-//services.AddModuleLLM(builder.Configuration);
+services.AddModuleLLM(builder.Configuration);
 services.AddCors();
 services.AddMapster();
 services.AddQuartzHostedService();

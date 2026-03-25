@@ -1,6 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using ModuleLLM.Configuration;
 using ModuleLLM.Services;
 using Shared.Contracts;
 
@@ -12,16 +10,13 @@ namespace Application.Services.Llm;
 public class LlmService : ILlmService
 {
     private readonly ILlmApiService _llmApiService;
-    private readonly LlmProviderOptions _llmOptions;
     private readonly ILogger<LlmService> _logger;
 
     public LlmService(
         ILlmApiService llmApiService,
-        IOptions<LlmProviderOptions> llmOptions,
         ILogger<LlmService> logger)
     {
         _llmApiService = llmApiService;
-        _llmOptions = llmOptions.Value;
         _logger = logger;
     }
 
@@ -39,13 +34,10 @@ public class LlmService : ILlmService
             if (string.IsNullOrWhiteSpace(transcription))
                 throw new Exception("Транскрипция не может быть пустой");
 
-            string result;
-            var providerName = _llmOptions.Provider ?? "groq";
-
-            result = await _llmApiService.ProcessConsultationTranscriptionAsync(
+            var result = await _llmApiService.ProcessAsync(
                 transcription, prompt, isJsonResponse, cancellationToken);
 
-            _logger.LogInformation("Успешно обработана транскрипция консультации через LLM ({Provider})", providerName);
+            _logger.LogInformation("Успешно обработана транскрипция консультации через LLM (OpenRouter)");
             return result;
         }
         catch (Exception ex)

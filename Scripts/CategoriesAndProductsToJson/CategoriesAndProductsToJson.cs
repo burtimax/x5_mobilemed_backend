@@ -11,11 +11,6 @@ namespace Scripts.CategoriesAndProductsToJson;
 /// </summary>
 public static class CategoriesAndProductsToJson
 {
-    private static readonly int[] CategoryIds =
-    [
-        1090, 298, 307, 31, 1153, 1154, 27, 258, 320, 1285, 306, 26, 30, 28, 32, 25
-    ];
-
     private const string DefaultConnectionString =
         "Host=127.0.0.1;Port=5432;Database=x5_mobilemed_db_1;Username=postgres;Password=123;Include Error Detail=true";
 
@@ -32,7 +27,7 @@ public static class CategoriesAndProductsToJson
 
         Console.WriteLine("Экспорт категорий с товарами в JSON");
         Console.WriteLine($"БД: {conn.Split(';').FirstOrDefault() ?? "?"}...");
-        Console.WriteLine($"Фильтр по ID категорий: {string.Join(", ", CategoryIds)}");
+        Console.WriteLine("Фильтр товаров: Priority < 100");
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(conn)
@@ -43,7 +38,6 @@ public static class CategoriesAndProductsToJson
         var categories = await ctx.Categories
             .AsNoTracking()
             .Include(c => c.Products)
-            .Where(c => CategoryIds.Contains(c.Id))
             .OrderBy(c => c.Id)
             .ToListAsync();
 
@@ -51,8 +45,10 @@ public static class CategoriesAndProductsToJson
         {
             Id = c.Id,
             Title = c.Title,
-            Products = c.Products.Select(p => MapProduct(p)).ToList()
+            Products = c.Products.Where(p => p.Priority < 100).Select(MapProduct).ToList()
         }).ToList();
+
+        dtos = dtos.Where(d => d.Products.Any()).ToList();
 
         List<string> excludeFeatures = new List<string>()
         {
@@ -87,7 +83,7 @@ public static class CategoriesAndProductsToJson
         //
         // await File.WriteAllTextAsync(fullPath, json);
 
-        Console.WriteLine($"Категорий: {categories.Count}, товаров: {categories.Sum(c => c.Products.Count)}");
+        Console.WriteLine($"Категорий: {categories.Count}, товаров: {dtos.Sum(c => c.Products.Count)}");
         //Console.WriteLine($"JSON записан: {fullPath}");
     }
 

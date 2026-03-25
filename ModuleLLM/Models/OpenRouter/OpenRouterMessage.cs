@@ -1,11 +1,8 @@
 using System.Text.Json.Serialization;
 
-namespace ModuleLLM.Models.GigaChat;
+namespace ModuleLLM.Models.OpenRouter;
 
-/// <summary>
-/// Сообщение для GigaChat API
-/// </summary>
-public class GigaChatMessage
+public class OpenRouterMessage
 {
     [JsonPropertyName("role")]
     public string Role { get; set; } = string.Empty;

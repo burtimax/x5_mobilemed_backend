@@ -8,6 +8,7 @@ using Application.Services.RppgScan;
 using Application.Services.StatEvent;
 using Application.Services.User;
 using Application.Services.UserExcludeProducts;
+using Application.Services.X5Products;
 using Application.Utils;
 using Infrastructure.Db.App;
 using Infrastructure.Db.App.Entities;
@@ -44,9 +45,11 @@ public static class IServiceCollectionExtensions
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IUserExcludeProductsService, UserExcludeProductsService>();
         services.AddScoped<IAssortmentService, AssortmentService>();
+        services.AddScoped<IX5ProductsService, X5ProductsService>();
 
         services.AddScoped<IStatEventService, StatEventService>();
         services.AddScoped<IRppgScanService, RppgScanService>();
+        services.AddScoped<IRppgScanReportService, RppgScanReportService>();
         services.AddScoped<IScanTranscriptsService, ScanTranscriptsService>();
         services.AddScoped<IDatabaseBootstrap, DatabaseBootstrap>();
 

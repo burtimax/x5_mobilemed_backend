@@ -3,32 +3,45 @@ using Infrastructure.Db.App.Entities;
 
 namespace Application.Models.WeekRation;
 
-/// <summary>Элемент рациона: id из ответа LLM и карточка товара из БД после <see cref="WeekRationEnrichment"/>.</summary>
-public sealed class WeekRationProductRefDto
+/// <summary>Вариант замены (в JSON только <c>id</c> и <c>weigth</c>).</summary>
+public sealed class WeekRationProductReplaceCandidateDto
 {
-    /// <summary>Идентификатор товара (как вернул LLM).</summary>
     public long Id { get; set; }
 
-    /// <summary>Товар из каталога; заполняется на сервере, если запись найдена по <see cref="Id"/>.</summary>
+    /// <summary>Рекомендуемая порция замены, г (ключ <c>weigth</c>).</summary>
+    [JsonPropertyName("weigth")]
+    public int PortionGrams { get; set; }
+
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ProductEntity? Product { get; set; }
 }
 
-/// <summary>Один день недельного рациона: приёмы пищи — списки товаров с id.</summary>
-public sealed class WeekRationDayDto
+/// <summary>Позиция в списке <see cref="WeekRationMealSlotDto.Food"/>.</summary>
+public sealed class WeekRationProductRefDto
 {
-    /// <summary>Номер дня от 1 до 7.</summary>
+    public long Id { get; set; }
+
+    /// <summary>Краткая причина выбора (в схеме LLM необязательна).</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Reason { get; set; }
+
+    [JsonPropertyName("weigth")]
+    public int PortionGrams { get; set; }
+
+    public List<WeekRationProductReplaceCandidateDto> Replace { get; set; } = [];
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ProductEntity? Product { get; set; }
+}
+
+/// <summary>Один приём пищи: день недели, тип и список товаров.</summary>
+public sealed class WeekRationMealSlotDto
+{
+    /// <summary>День 1–7.</summary>
     public int Day { get; set; }
 
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<WeekRationProductRefDto>? Breakfast { get; set; }
+    /// <summary>Одно из: breakfast, lunch, snack, dinner.</summary>
+    public string Type { get; set; } = string.Empty;
 
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<WeekRationProductRefDto>? Lunch { get; set; }
-
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<WeekRationProductRefDto>? Snack { get; set; }
-
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<WeekRationProductRefDto>? Dinner { get; set; }
+    public List<WeekRationProductRefDto> Food { get; set; } = [];
 }

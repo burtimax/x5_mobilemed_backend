@@ -26,10 +26,9 @@ public sealed class OpenRouterWeekRationEndpoint : Endpoint<WeekRationRequest, W
 
     private const string SystemPrompt =
         "Ты врач-диетолог и составляешь рацион на 7 дней только из товаров каталога ниже. "
-        + "В JSON указывай для каждого приёма пищи только идентификаторы товаров (id) из карточек каталога (поле ID: в тексте). "
-        + "Опирайся на отчёт сканирования и калорийность из профиля. "
-        + "Не включай товары из списка исключений пользователя. "
-        + "Ответ — корневой JSON-массив из 7 объектов: day 1–7 без повторов, у каждого дня массивы breakfast, lunch, snack, dinner; в массивах только объекты с полем id (целое число из каталога).";
+        + "Корневой ответ — массив из 28 объектов: у каждого day (1–7), type (breakfast|lunch|snack|dinner) и food — список позиций с id из каталога, по желанию reason, обязательно weigth (граммы) и replace (1–5 объектов с id и weigth). "
+        + "Каждая пара (day, type) встречается ровно один раз. "
+        + "Опирайся на отчёт сканирования и калорийность из профиля; не включай исключённые пользователем товары.";
 
     private static readonly string WeekRationResponseFormatJson =
         """
@@ -40,77 +39,68 @@ public sealed class OpenRouterWeekRationEndpoint : Endpoint<WeekRationRequest, W
             "strict": true,
             "schema": {
               "type": "array",
-              "description": "Список приёмов пищи по дням недели. Каждый объект содержит номер дня и один тип приёма пищи с массивом товаров.",
+              "description": "Список приёмов пищи по дням недели. Каждый объект содержит номер дня, тип приёма пищи и список товаров. Для каждого товара указывается идентификатор товара, краткая причина выбора, вес порции в граммах и варианты замены.",
               "items": {
                 "type": "object",
                 "additionalProperties": false,
+                "required": ["day", "type", "food"],
                 "properties": {
                   "day": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 7,
                     "description": "Номер дня недели от 1 до 7."
                   },
-                  "breakfast": {
-                    "type": "array",
-                    "description": "Список товаров на завтрак.",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": false,
-                      "properties": {
-                        "id": {
-                          "type": "integer",
-                          "description": "Идентификатор товара."
-                        }
-                      },
-                      "required": ["id"]
-                    }
+                  "type": {
+                    "type": "string",
+                    "description": "Тип приёма пищи.",
+                    "enum": ["breakfast", "lunch", "snack", "dinner"]
                   },
-                  "lunch": {
+                  "food": {
                     "type": "array",
-                    "description": "Список товаров на обед.",
+                    "description": "Список товаров для этого приёма пищи.",
                     "items": {
                       "type": "object",
                       "additionalProperties": false,
+                      "required": ["id", "weigth", "replace"],
                       "properties": {
                         "id": {
                           "type": "integer",
                           "description": "Идентификатор товара."
-                        }
-                      },
-                      "required": ["id"]
-                    }
-                  },
-                  "snack": {
-                    "type": "array",
-                    "description": "Список товаров на перекус.",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": false,
-                      "properties": {
-                        "id": {
+                        },
+                        "reason": {
+                          "type": "string",
+                          "description": "Одно короткое предложение, почему именно этот товар нужен в рационе. Причина может быть связана с показателями здоровья или КБЖУ. В предложении не должно быть названия товара, кратно и лаконично (до 12 слов)."
+                        },
+                        "weigth": {
                           "type": "integer",
-                          "description": "Идентификатор товара."
+                          "description": "Сколько грамм нужно съесть. Вес порции в граммах."
+                        },
+                        "replace": {
+                          "type": "array",
+                          "minItems": 1,
+                          "maxItems": 5,
+                          "description": "Список товаров, которыми можно заменить данный товар в этом приёме пищи. Нужно предложить от 1 до 5 вариантов.",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["id", "weigth"],
+                            "properties": {
+                              "id": {
+                                "type": "integer",
+                                "description": "Идентификатор товара-замены."
+                              },
+                              "weigth": {
+                                "type": "integer",
+                                "description": "Вес порции товара-замены в граммах."
+                              }
+                            }
+                          }
                         }
-                      },
-                      "required": ["id"]
-                    }
-                  },
-                  "dinner": {
-                    "type": "array",
-                    "description": "Список товаров на ужин.",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": false,
-                      "properties": {
-                        "id": {
-                          "type": "integer",
-                          "description": "Идентификатор товара."
-                        }
-                      },
-                      "required": ["id"]
+                      }
                     }
                   }
-                },
-                "required": ["day"]
+                }
               }
             }
           }
@@ -192,7 +182,7 @@ public sealed class OpenRouterWeekRationEndpoint : Endpoint<WeekRationRequest, W
             + excludedBlock
             + "\n\n### Каталог товаров (используй только ID из карточек)\n"
             + catalogText
-            + "\n\nСоставь недельный рацион: корневой JSON-массив из 7 дней в формате схемы (только id товаров).";
+            + "\n\nСоставь недельный рацион: корневой JSON-массив из 28 элементов (каждый: day, type, food) по схеме.";
 
         var model = string.IsNullOrWhiteSpace(req.Model) ? _openRouterConfig.Model : req.Model.Trim();
 
@@ -234,11 +224,11 @@ public sealed class OpenRouterWeekRationEndpoint : Endpoint<WeekRationRequest, W
             return;
         }
 
-        List<WeekRationDayDto>? days;
+        List<WeekRationMealSlotDto>? slots;
         try
         {
             var jsonText = UnwrapAssistantJsonPayload(message.Content);
-            days = JsonSerializer.Deserialize<List<WeekRationDayDto>>(jsonText, RationJsonOptions);
+            slots = JsonSerializer.Deserialize<List<WeekRationMealSlotDto>>(jsonText, RationJsonOptions);
         }
         catch (JsonException)
         {
@@ -253,12 +243,12 @@ public sealed class OpenRouterWeekRationEndpoint : Endpoint<WeekRationRequest, W
             return;
         }
 
-        if (days is null || days.Count != 7)
+        if (slots is null)
         {
             await SendAsync(
                 new WeekRationResponseDto
                 {
-                    Error = "Ответ модели не является списком из 7 дней рациона.",
+                    Error = "Ответ модели не удалось разобрать как список приёмов пищи.",
                     RawAssistantContent = message.Content
                 },
                 statusCode: 502,
@@ -266,11 +256,24 @@ public sealed class OpenRouterWeekRationEndpoint : Endpoint<WeekRationRequest, W
             return;
         }
 
-        var productIds = WeekRationEnrichment.CollectProductIds(days);
-        var productsById = await _productsService.GetProductsByIdsAsync(productIds, ct);
-        WeekRationEnrichment.AttachProducts(days, productsById);
+        if (!IsValidWeekRationSlots(slots, out var slotValidationError))
+        {
+            await SendAsync(
+                new WeekRationResponseDto
+                {
+                    Error = slotValidationError,
+                    RawAssistantContent = message.Content
+                },
+                statusCode: 502,
+                cancellation: ct);
+            return;
+        }
 
-        await SendAsync(new WeekRationResponseDto { Ration = days }, cancellation: ct);
+        var productIds = WeekRationEnrichment.CollectProductIds(slots);
+        var productsById = await _productsService.GetProductsByIdsAsync(productIds, ct);
+        WeekRationEnrichment.AttachProducts(slots, productsById);
+
+        await SendAsync(new WeekRationResponseDto { Ration = slots }, cancellation: ct);
     }
 
     private static string FormatProfileBlock(UserProfileEntity? profile, int? maintenanceKcal)
@@ -301,6 +304,56 @@ public sealed class OpenRouterWeekRationEndpoint : Endpoint<WeekRationRequest, W
         Gender.Female => "женский",
         _ => "не указан"
     };
+
+    private static readonly string[] WeekRationMealTypes = ["breakfast", "lunch", "snack", "dinner"];
+
+    private static bool IsValidWeekRationSlots(IReadOnlyList<WeekRationMealSlotDto> slots, out string errorMessage)
+    {
+        if (slots.Count != 28)
+        {
+            errorMessage = "Ожидается 28 записей приёма пищи (7 дней × 4 типа: breakfast, lunch, snack, dinner).";
+            return false;
+        }
+
+        var seen = new HashSet<(int Day, string Type)>();
+        foreach (var s in slots)
+        {
+            if (s.Day is < 1 or > 7)
+            {
+                errorMessage = "Поле day должно быть от 1 до 7.";
+                return false;
+            }
+
+            var t = (s.Type ?? string.Empty).Trim().ToLowerInvariant();
+            if (Array.IndexOf(WeekRationMealTypes, t) < 0)
+            {
+                errorMessage =
+                    "Поле type должно быть одним из: breakfast, lunch, snack, dinner.";
+                return false;
+            }
+
+            if (!seen.Add((s.Day, t)))
+            {
+                errorMessage = "Повтор сочетания day и type.";
+                return false;
+            }
+        }
+
+        for (var d = 1; d <= 7; d++)
+        {
+            foreach (var t in WeekRationMealTypes)
+            {
+                if (!seen.Contains((d, t)))
+                {
+                    errorMessage = "Не хватает приёма пищи для полной недели (каждая пара день + тип должна быть ровно один раз).";
+                    return false;
+                }
+            }
+        }
+
+        errorMessage = string.Empty;
+        return true;
+    }
 
     private static string UnwrapAssistantJsonPayload(string content)
     {

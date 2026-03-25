@@ -2,49 +2,37 @@ using Infrastructure.Db.App.Entities;
 
 namespace Application.Models.WeekRation;
 
-/// <summary>Сбор идентификаторов и привязка <see cref="WeekRationProductRefDto.Product"/> из БД.</summary>
+/// <summary>Сбор id и привязка <see cref="ProductEntity"/> к позициям и заменам.</summary>
 public static class WeekRationEnrichment
 {
-    public static IReadOnlyList<long> CollectProductIds(IEnumerable<WeekRationDayDto> days)
+    public static IReadOnlyList<long> CollectProductIds(IEnumerable<WeekRationMealSlotDto> slots)
     {
         var ids = new HashSet<long>();
-        foreach (var day in days)
+        foreach (var slot in slots)
         {
-            AddMeal(day.Breakfast);
-            AddMeal(day.Lunch);
-            AddMeal(day.Snack);
-            AddMeal(day.Dinner);
+            foreach (var item in slot.Food ?? [])
+            {
+                ids.Add(item.Id);
+                foreach (var r in item.Replace ?? [])
+                    ids.Add(r.Id);
+            }
         }
 
         return ids.ToList();
-
-        void AddMeal(List<WeekRationProductRefDto>? meal)
-        {
-            if (meal == null)
-                return;
-            foreach (var item in meal)
-                ids.Add(item.Id);
-        }
     }
 
     public static void AttachProducts(
-        IList<WeekRationDayDto> days,
+        IList<WeekRationMealSlotDto> slots,
         IReadOnlyDictionary<long, ProductEntity> productsById)
     {
-        foreach (var day in days)
+        foreach (var slot in slots)
         {
-            AttachMeal(day.Breakfast);
-            AttachMeal(day.Lunch);
-            AttachMeal(day.Snack);
-            AttachMeal(day.Dinner);
-        }
-
-        void AttachMeal(List<WeekRationProductRefDto>? meal)
-        {
-            if (meal == null)
-                return;
-            foreach (var item in meal)
+            foreach (var item in slot.Food ?? [])
+            {
                 item.Product = productsById.TryGetValue(item.Id, out var p) ? p : null;
+                foreach (var r in item.Replace ?? [])
+                    r.Product = productsById.TryGetValue(r.Id, out var rp) ? rp : null;
+            }
         }
     }
 }

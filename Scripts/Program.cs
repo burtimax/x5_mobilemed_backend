@@ -10,6 +10,6 @@ using Scripts.DbTableProductsToExcel;
 // Текст без флага (как раньше: первый аргумент не используется, conn = args[1]):
 //   dotnet run --project Scripts _ [строка_подключения] [путь_к_output_txt]
 
-await CategoriesAndProductsToText.RunAsync();
+await TestGeminiScript.RunAsync();
 
 Console.ReadLine();

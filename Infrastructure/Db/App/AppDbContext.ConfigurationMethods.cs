@@ -55,6 +55,9 @@ public partial class AppDbContext
         builder.Entity<UserRppgScanResultItemEntity>().ToTable("user_rppg_scan_result_items", appSchema);
         builder.Entity<ExcludeProductEntity>().ToTable("exclude_products", appSchema);
         builder.Entity<UserExcludeProductEntity>().ToTable("user_exclude_products", appSchema);
+        builder.Entity<WeekRationEntity>().ToTable("week_rations", appSchema);
+        builder.Entity<WeekRationItemEntity>().ToTable("week_ration_items", appSchema);
+        builder.Entity<WeekRationItemReplaceEntity>().ToTable("week_ration_item_replaces", appSchema);
 
         // X5 схема
         builder.Entity<ProductEntity>().ToTable("products", x5Schema);
@@ -139,6 +142,42 @@ public partial class AppDbContext
         builder.Entity<UserExcludeProductEntity>()
             .HasIndex(e => new { e.UserId, e.ExcludeProduct })
             .IsUnique();
+
+        builder.Entity<WeekRationEntity>()
+            .HasOne(w => w.User)
+            .WithMany()
+            .HasForeignKey(w => w.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<WeekRationEntity>()
+            .HasOne(w => w.RppgScan)
+            .WithMany()
+            .HasForeignKey(w => w.RppgScanId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<WeekRationItemEntity>()
+            .HasOne(i => i.WeekRation)
+            .WithMany(w => w.Items)
+            .HasForeignKey(i => i.WeekRationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<WeekRationItemEntity>()
+            .HasOne(i => i.Product)
+            .WithMany()
+            .HasForeignKey(i => i.ProductId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<WeekRationItemReplaceEntity>()
+            .HasOne(r => r.WeekRationItem)
+            .WithMany(i => i.Replaces)
+            .HasForeignKey(r => r.WeekRationItemId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<WeekRationItemReplaceEntity>()
+            .HasOne(r => r.Product)
+            .WithMany()
+            .HasForeignKey(r => r.ProductId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Связь ProductEntity -> CategoryEntity
         builder.Entity<ProductEntity>()

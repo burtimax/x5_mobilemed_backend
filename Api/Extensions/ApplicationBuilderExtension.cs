@@ -21,6 +21,15 @@ public static class ApplicationBuilderExtension
             .Build();
         scheduler.ScheduleJob(telegramErrorSenderJob, telegramErrorSenderTrigger);
 
+        IJobDetail generateWeekRationJob = JobBuilder.Create<GenerateWeekRationJob>()
+            .WithIdentity("generate_week_ration", "rations")
+            .Build();
+        ITrigger generateWeekRationTrigger = TriggerBuilder.Create()
+            .WithIdentity("generate_week_ration_trigger", "rations")
+            .WithSimpleSchedule(x => x.WithIntervalInSeconds(2).RepeatForever())
+            .Build();
+        scheduler.ScheduleJob(generateWeekRationJob, generateWeekRationTrigger);
+
         return builder;
     }
 }

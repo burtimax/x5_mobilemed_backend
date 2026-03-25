@@ -10,6 +10,7 @@ using Application.Services.User;
 using Application.Services.UserExcludeProducts;
 using Application.Services.WeekRation;
 using Application.Services.X5Products;
+using Application.QuartzJobs;
 using Application.Utils;
 using Infrastructure.Db.App;
 using Infrastructure.Db.App.Entities;
@@ -42,6 +43,10 @@ public static class IServiceCollectionExtensions
 
     public static void AddServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<WeekRationGenerationJobOptions>(
+            configuration.GetSection(WeekRationGenerationJobOptions.SectionName));
+        services.AddSingleton<WeekRationGenerationConcurrencyGate>();
+
         services.AddJwt(configuration);
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IUserExcludeProductsService, UserExcludeProductsService>();
@@ -52,6 +57,8 @@ public static class IServiceCollectionExtensions
         services.AddScoped<IRppgScanService, RppgScanService>();
         services.AddScoped<IRppgScanReportService, RppgScanReportService>();
         services.AddScoped<IWeekRationGeneratorService, WeekRationGeneratorService>();
+        services.AddScoped<IWeekRationPersistenceService, WeekRationPersistenceService>();
+        services.AddTransient<GenerateWeekRationJob>();
         services.AddScoped<IScanTranscriptsService, ScanTranscriptsService>();
         services.AddScoped<IDatabaseBootstrap, DatabaseBootstrap>();
 

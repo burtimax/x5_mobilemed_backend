@@ -30,6 +30,9 @@ public partial class AppDbContext : DbContext
     public DbSet<BiomarkerEntity> Biomarkers => Set<BiomarkerEntity>();
     public DbSet<BiomarkerScaleEntity> BiomarkerScales => Set<BiomarkerScaleEntity>();
     public DbSet<BiomarkerZoneEntity> BiomarkerZones => Set<BiomarkerZoneEntity>();
+    public DbSet<WeekRationEntity> WeekRations => Set<WeekRationEntity>();
+    public DbSet<WeekRationItemEntity> WeekRationItems => Set<WeekRationItemEntity>();
+    public DbSet<WeekRationItemReplaceEntity> WeekRationItemReplaces => Set<WeekRationItemReplaceEntity>();
 
 
     protected override void OnModelCreating(ModelBuilder builder)

@@ -79,6 +79,7 @@ public sealed class RppgScanReportService : IRppgScanReportService
         sb.AppendLine($"Идентификатор скана: {scan.Id}");
         sb.AppendLine($"Создан: {scan.CreatedAt.ToString("g", Ru)}");
         sb.AppendLine($"Статус: {FormatScanStatus(scan.Status)}");
+        sb.AppendLine($"Генерация рациона: {FormatWeekRationGenerationStatus(scan.WeekRationGenerationStatus)}");
         sb.AppendLine();
         sb.AppendLine("Профиль пользователя (для подбора шкалы):");
         if (profile == null)
@@ -221,6 +222,16 @@ public sealed class RppgScanReportService : IRppgScanReportService
         RppgScanStatus.InProgress => "в процессе",
         RppgScanStatus.Failed => "ошибка",
         RppgScanStatus.Completed => "завершён",
+        _ => status.ToString()
+    };
+
+    private static string FormatWeekRationGenerationStatus(WeekRationGenerationStatus status) => status switch
+    {
+        WeekRationGenerationStatus.None => "не запланирована",
+        WeekRationGenerationStatus.Pending => "ожидает генерации",
+        WeekRationGenerationStatus.InProgress => "выполняется",
+        WeekRationGenerationStatus.Completed => "готово",
+        WeekRationGenerationStatus.Failed => "ошибка",
         _ => status.ToString()
     };
 

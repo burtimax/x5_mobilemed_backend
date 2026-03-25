@@ -28,6 +28,7 @@ public static class BinahSdkResultParser
         {
             UserId = userId,
             SdkResult = rawResult.ToJson(),
+            WeekRationGenerationStatus = WeekRationGenerationStatus.Pending,
         };
 
         var items = new List<UserRppgScanResultItemEntity>();

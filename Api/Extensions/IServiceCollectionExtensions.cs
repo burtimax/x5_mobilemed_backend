@@ -8,6 +8,7 @@ using Application.Services.RppgScan;
 using Application.Services.StatEvent;
 using Application.Services.User;
 using Application.Services.UserExcludeProducts;
+using Application.Services.WeekRation;
 using Application.Services.X5Products;
 using Application.Utils;
 using Infrastructure.Db.App;
@@ -50,6 +51,7 @@ public static class IServiceCollectionExtensions
         services.AddScoped<IStatEventService, StatEventService>();
         services.AddScoped<IRppgScanService, RppgScanService>();
         services.AddScoped<IRppgScanReportService, RppgScanReportService>();
+        services.AddScoped<IWeekRationGeneratorService, WeekRationGeneratorService>();
         services.AddScoped<IScanTranscriptsService, ScanTranscriptsService>();
         services.AddScoped<IDatabaseBootstrap, DatabaseBootstrap>();
 

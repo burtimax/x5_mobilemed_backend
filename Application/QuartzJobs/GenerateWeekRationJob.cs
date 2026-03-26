@@ -1,4 +1,5 @@
 using Application.Models.WeekRation;
+using Application.Processing;
 using Application.Services.WeekRation;
 using Infrastructure.Db.App;
 using Infrastructure.Db.App.Entities;
@@ -51,27 +52,29 @@ public sealed class GenerateWeekRationJob : IJob
         if (scans.Count == 0)
             return;
 
-        var gate = _concurrencyGate.Semaphore;
+        // Список Pending снят отдельным scope. Задачи ставятся в очередь сразу; семафор из гейта ограничивает число одновременных генераций. Отдельный scope/DbContext — в ProcessOneScanAsync / TryMarkScanFailedAsync.
+        using var processor = new LongTaskProcessor(_concurrencyGate.Semaphore, _concurrencyGate.MaxParallelism);
         foreach (var scan in scans)
         {
-            await gate.WaitAsync(ct);
-            try
-            {
-                await ProcessOneScanAsync(scan.ScanId, scan.UserId, ct);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Непредвиденная ошибка при генерации рациона для скана {ScanId}", scan.ScanId);
-                await TryMarkScanFailedAsync(scan.ScanId, $"Исключение: {ex.Message}", ct);
-            }
-            finally
-            {
-                gate.Release();
-            }
+            var s = scan;
+            processor.Enqueue(() => ProcessOneScanItemAsync(s, ct), ct);
+        }
+    }
+
+    private async Task ProcessOneScanItemAsync((Guid ScanId, Guid UserId) scan, CancellationToken ct)
+    {
+        try
+        {
+            await ProcessOneScanAsync(scan.ScanId, scan.UserId, ct);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Непредвиденная ошибка при генерации рациона для скана {ScanId}", scan.ScanId);
+            await TryMarkScanFailedAsync(scan.ScanId, $"Исключение: {ex.Message}", ct);
         }
     }
 
@@ -104,25 +107,28 @@ public sealed class GenerateWeekRationJob : IJob
         var generator = sp.GetRequiredService<IWeekRationGeneratorService>();
         var persistence = sp.GetRequiredService<IWeekRationPersistenceService>();
 
+        var claimed = await db.UserRppgScans
+            .Where(s => s.Id == scanId && s.WeekRationGenerationStatus == WeekRationGenerationStatus.Pending)
+            .ExecuteUpdateAsync(
+                setters => setters
+                    .SetProperty(s => s.WeekRationGenerationStatus, WeekRationGenerationStatus.InProgress)
+                    .SetProperty(s => s.StatusMessage, "Подготовка к генерации рациона..."),
+                ct);
+        if (claimed == 0)
+            return;
+
         var scan = await db.UserRppgScans.FirstOrDefaultAsync(s => s.Id == scanId, ct);
         if (scan == null)
         {
-            _logger.LogWarning("Скан {ScanId} не найден", scanId);
+            _logger.LogWarning("Скан {ScanId} не найден после захвата в очередь", scanId);
             return;
         }
-
-        if (scan.WeekRationGenerationStatus != WeekRationGenerationStatus.Pending)
-            return;
-
-        scan.WeekRationGenerationStatus = WeekRationGenerationStatus.InProgress;
-        scan.StatusMessage = "Подготовка к генерации рациона...";
-        await db.SaveChangesAsync(ct);
 
         WeekRationGeneratorOutcome? lastOutcome = null;
 
         for (var attempt = 1; attempt <= MaxGenerationAttempts; attempt++)
         {
-            scan.StatusMessage = $"Генерация рациона (LLM), попытка {attempt} из {MaxGenerationAttempts}...";
+            scan.StatusMessage = $"Генерация рациона {scanId} (LLM), попытка {attempt} из {MaxGenerationAttempts}...";
             await db.SaveChangesAsync(ct);
 
             var request = new WeekRationRequest { ScanId = scanId };

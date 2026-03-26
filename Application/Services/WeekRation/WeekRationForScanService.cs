@@ -200,8 +200,7 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
     {
         return new DayRationProductRefDto
         {
-            Id = item.Id,
-            ProductId = item.ProductId,
+            Id = item.ProductId,
             Reason = item.Reason,
             Weigth = item.Weigth,
             Product = item.Product,
@@ -209,8 +208,7 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
                 .OrderBy(r => r.Id)
                 .Select(r => new WeekRationProductReplaceCandidateDto
                 {
-                    Id = r.Id,
-                    ProductId = r.ProductId,
+                    Id = r.ProductId,
                     Weigth = r.Weight,
                     Reason = r.Reason,
                     Product = r.Product

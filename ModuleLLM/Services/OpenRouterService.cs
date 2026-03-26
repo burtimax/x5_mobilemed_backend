@@ -344,7 +344,7 @@ public class OpenRouterService : ILlmApiService
             {
                 sw.Stop();
                 lastException = ex;
-                _logger.LogWarning(
+                _logger.LogError(
                     "Таймаут при запросе к OpenRouter API (попытка {Attempt}/{MaxAttempts})",
                     attempt,
                     _config.MaxRetryAttempts);
@@ -372,7 +372,7 @@ public class OpenRouterService : ILlmApiService
             {
                 sw.Stop();
                 lastException = ex;
-                _logger.LogWarning(
+                _logger.LogError(
                     ex,
                     "Ошибка сети при запросе к OpenRouter API (попытка {Attempt}/{MaxAttempts})",
                     attempt,

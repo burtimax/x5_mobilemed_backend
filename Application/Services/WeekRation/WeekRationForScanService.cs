@@ -59,11 +59,10 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
     /// <inheritdoc />
     public async Task<WeekRationResponseDto?> GetStoredRationByIdAsync(
         Guid rationId,
-        Guid userId,
         CancellationToken cancellationToken = default)
     {
         var ration = await WeekRationsWithDetails()
-            .FirstOrDefaultAsync(w => w.Id == rationId && w.UserId == userId, cancellationToken);
+            .FirstOrDefaultAsync(w => w.Id == rationId, cancellationToken);
 
         return MapRationToResponse(ration);
     }

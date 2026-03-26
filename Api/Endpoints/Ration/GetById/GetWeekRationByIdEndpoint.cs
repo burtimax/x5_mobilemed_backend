@@ -20,17 +20,18 @@ public sealed class GetWeekRationByIdEndpoint : Endpoint<WeekRationByIdRouteRequ
     {
         Get("{rationId}");
         Group<RationGroupEndpoints>();
+        AllowAnonymous();
         Summary(s =>
         {
-            s.Summary = "Рацион по ИД";
+            s.Summary = "Публичный метод. Рацион по ИД";
             s.Description = "Возвращает рацион по идентификатору сохранённой записи (если она принадлежит текущему пользователю).";
         });
     }
 
     public override async Task HandleAsync(WeekRationByIdRouteRequest req, CancellationToken ct)
     {
-        var userId = HttpContext.TokenData().UserId;
-        var dto = await _rationForScan.GetStoredRationByIdAsync(req.RationId, userId, ct);
+        //var userId = HttpContext.TokenData().UserId;
+        var dto = await _rationForScan.GetStoredRationByIdAsync(req.RationId, ct);
         if (dto == null || dto.Ration is not { Count: > 0 })
         {
             await SendNotFoundAsync(ct);

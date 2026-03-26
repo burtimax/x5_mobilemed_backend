@@ -17,7 +17,6 @@ public interface IWeekRationForScanService
     /// <summary>Сохранённый рацион по ИД записи рациона в БД.</summary>
     Task<WeekRationResponseDto?> GetStoredRationByIdAsync(
         Guid rationId,
-        Guid userId,
         CancellationToken cancellationToken = default);
 
     /// <summary>

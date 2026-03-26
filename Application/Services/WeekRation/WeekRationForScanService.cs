@@ -7,8 +7,6 @@ namespace Application.Services.WeekRation;
 
 public sealed class WeekRationForScanService : IWeekRationForScanService
 {
-    private static readonly string[] MealTypeOrder = ["breakfast", "lunch", "snack", "dinner"];
-
     private readonly AppDbContext _db;
 
     public WeekRationForScanService(AppDbContext db)
@@ -37,7 +35,7 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
     }
 
     /// <inheritdoc />
-    public async Task<WeekRationResponseDto?> GetStoredRationAsync(
+    public async Task<WeekRationEntity?> GetStoredRationAsync(
         Guid scanId,
         Guid userId,
         CancellationToken cancellationToken = default)
@@ -53,22 +51,22 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
             .OrderByDescending(w => w.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken);
 
-        return MapRationToResponse(ration);
+        return RationOrNull(ration);
     }
 
     /// <inheritdoc />
-    public async Task<WeekRationResponseDto?> GetStoredRationByIdAsync(
+    public async Task<WeekRationEntity?> GetStoredRationByIdAsync(
         Guid rationId,
         CancellationToken cancellationToken = default)
     {
         var ration = await WeekRationsWithDetails()
             .FirstOrDefaultAsync(w => w.Id == rationId, cancellationToken);
 
-        return MapRationToResponse(ration);
+        return RationOrNull(ration);
     }
 
     /// <inheritdoc />
-    public async Task<WeekRationResponseDto?> ReplaceWeekRationItemAsync(
+    public async Task<WeekRationEntity?> ReplaceWeekRationItemAsync(
         Guid weekRationItemId,
         long newProductId,
         int newWeigth,
@@ -96,7 +94,7 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
         {
             item.Weigth = newWeigth;
             await _db.SaveChangesAsync(cancellationToken);
-            return await ReloadRationResponseAsync(item.WeekRationId, cancellationToken);
+            return await ReloadRationEntityAsync(item.WeekRationId, cancellationToken);
         }
 
         var promoted = item.Replaces.Where(r => r.ProductId == newProductId).ToList();
@@ -123,14 +121,14 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
         item.Weigth = newWeigth;
 
         await _db.SaveChangesAsync(cancellationToken);
-        return await ReloadRationResponseAsync(item.WeekRationId, cancellationToken);
+        return await ReloadRationEntityAsync(item.WeekRationId, cancellationToken);
     }
 
-    private async Task<WeekRationResponseDto?> ReloadRationResponseAsync(Guid rationId, CancellationToken cancellationToken)
+    private async Task<WeekRationEntity?> ReloadRationEntityAsync(Guid rationId, CancellationToken cancellationToken)
     {
         var ration = await WeekRationsWithDetails()
             .FirstOrDefaultAsync(w => w.Id == rationId, cancellationToken);
-        return MapRationToResponse(ration);
+        return RationOrNull(ration);
     }
 
     /// <inheritdoc />
@@ -155,71 +153,16 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
     {
         return _db.WeekRations
             .AsNoTracking()
-            .Include(w => w.Items)
+            .Include(w => w.Items.OrderBy(i => i.Order))
             .ThenInclude(i => i.Replaces)
             .ThenInclude(r => r.Product)
-            .Include(w => w.Items)
-            .ThenInclude(i => i.Product);
+            .Include(w => w.Items.OrderBy(i => i.Order))
+            .ThenInclude(i => i.Product)
+            .OrderBy(i => i.CreatedAt);
     }
 
-    private static WeekRationResponseDto? MapRationToResponse(WeekRationEntity? ration)
+    private static WeekRationEntity? RationOrNull(WeekRationEntity? ration)
     {
-        if (ration?.Items is not { Count: > 0 })
-            return null;
-
-        var slots = MapItemsToSlots(ration.Items);
-        return new WeekRationResponseDto
-        {
-            Id = ration.Id,
-            RppgScanId = ration.RppgScanId,
-            CreatedAt = ration.CreatedAt,
-            Ration = slots
-        };
-    }
-
-    private static List<DayRationMealSlotDto> MapItemsToSlots(IReadOnlyList<WeekRationItemEntity> items)
-    {
-        return items
-            .GroupBy(i => (i.Day, TypeKey: i.Type.Trim().ToLowerInvariant()))
-            .OrderBy(g => g.Key.Day)
-            .ThenBy(g => MealOrdinal(g.Key.TypeKey))
-            .Select(g =>
-            {
-                var first = g.First();
-                return new DayRationMealSlotDto
-                {
-                    Day = g.Key.Day,
-                    Type = first.Type,
-                    Food = g.Select(MapFood).ToList()
-                };
-            })
-            .ToList();
-    }
-
-    private static DayRationProductRefDto MapFood(WeekRationItemEntity item)
-    {
-        return new DayRationProductRefDto
-        {
-            Id = item.ProductId,
-            Reason = item.Reason,
-            Weigth = item.Weigth,
-            Product = item.Product,
-            Replace = item.Replaces
-                .OrderBy(r => r.Id)
-                .Select(r => new WeekRationProductReplaceCandidateDto
-                {
-                    Id = r.ProductId,
-                    Weigth = r.Weight,
-                    Reason = r.Reason,
-                    Product = r.Product
-                })
-                .ToList()
-        };
-    }
-
-    private static int MealOrdinal(string typeNormalized)
-    {
-        var i = Array.IndexOf(MealTypeOrder, typeNormalized);
-        return i >= 0 ? i : 99;
+        return ration?.Items is { Count: > 0 } ? ration : null;
     }
 }

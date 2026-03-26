@@ -29,18 +29,22 @@ public sealed class WeekRationPersistenceService : IWeekRationPersistenceService
             RppgScanId = rppgScanId
         };
 
+        int c = 0;
         foreach (var slot in slots)
         {
             foreach (var food in slot.Food ?? [])
             {
+                c += 1;
                 var item = new WeekRationItemEntity
                 {
                     Type = slot.Type,
+                    Order = c,
                     Day = slot.Day,
                     ProductId = food.Id,
                     Weigth = food.Weigth,
                     Reason = food.Reason
                 };
+
                 foreach (var rep in food.Replace ?? [])
                 {
                     item.Replaces.Add(new WeekRationItemReplaceEntity

@@ -21,5 +21,26 @@ public class WeekRationEntity : BaseEntity
     [JsonIgnore]
     public UserRppgScanEntity? RppgScan { get; set; }
 
+    [JsonPropertyOrder(int.MaxValue)]
     public List<WeekRationItemEntity> Items { get; set; } = [];
+
+    /// <summary>
+    /// Ккал.
+    /// </summary>
+    public decimal? Kcal => Items.Sum(i => i.Kcal);
+
+    /// <summary>
+    /// Белки (г).
+    /// </summary>
+    public decimal? Proteins => Items.Sum(i => i.Proteins);
+
+    /// <summary>
+    /// Жиры (г).
+    /// </summary>
+    public decimal? Fats => Items.Sum(i => i.Fats);
+
+    /// <summary>
+    /// Углеводы (г).
+    /// </summary>
+    public decimal? Carbs => Items.Sum(i => i.Carbs);
 }

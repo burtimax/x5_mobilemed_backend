@@ -1,4 +1,5 @@
 using Application.Models.WeekRation;
+using Infrastructure.Db.App.Entities;
 
 namespace Application.Services.WeekRation;
 
@@ -9,13 +10,13 @@ public interface IWeekRationForScanService
         Guid userId,
         CancellationToken cancellationToken = default);
 
-    Task<WeekRationResponseDto?> GetStoredRationAsync(
+    Task<WeekRationEntity?> GetStoredRationAsync(
         Guid scanId,
         Guid userId,
         CancellationToken cancellationToken = default);
 
     /// <summary>Сохранённый рацион по ИД записи рациона в БД.</summary>
-    Task<WeekRationResponseDto?> GetStoredRationByIdAsync(
+    Task<WeekRationEntity?> GetStoredRationByIdAsync(
         Guid rationId,
         CancellationToken cancellationToken = default);
 
@@ -30,7 +31,7 @@ public interface IWeekRationForScanService
     /// При выборе товара из замен соответствующие записи замен удаляются.
     /// </summary>
     /// <returns>Обновлённый рацион или <c>null</c>, если позиция не найдена, нет доступа или товар отсутствует в каталоге.</returns>
-    Task<WeekRationResponseDto?> ReplaceWeekRationItemAsync(
+    Task<WeekRationEntity?> ReplaceWeekRationItemAsync(
         Guid weekRationItemId,
         long newProductId,
         int newWeigth,

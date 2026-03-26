@@ -2,12 +2,13 @@ using Api.Extensions;
 using Application.Models.WeekRation;
 using Application.Services.WeekRation;
 using FastEndpoints;
+using Infrastructure.Db.App.Entities;
 using Shared.Contracts;
 
 namespace Api.Endpoints.Ration.ReplaceItem;
 
 /// <summary>Замена товара в позиции рациона с переносом прежнего основного в список замен.</summary>
-public sealed class ReplaceWeekRationItemEndpoint : Endpoint<ReplaceWeekRationItemRequest, Result<WeekRationResponseDto>>
+public sealed class ReplaceWeekRationItemEndpoint : Endpoint<ReplaceWeekRationItemRequest, Result<WeekRationEntity>>
 {
     private readonly IWeekRationForScanService _rationForScan;
 
@@ -32,13 +33,13 @@ public sealed class ReplaceWeekRationItemEndpoint : Endpoint<ReplaceWeekRationIt
     public override async Task HandleAsync(ReplaceWeekRationItemRequest req, CancellationToken ct)
     {
         var userId = HttpContext.TokenData().UserId;
-        var dto = await _rationForScan.ReplaceWeekRationItemAsync(req.Id, req.ProductId, req.Weigth, userId, ct);
-        if (dto == null)
+        var ration = await _rationForScan.ReplaceWeekRationItemAsync(req.Id, req.ProductId, req.Weigth, userId, ct);
+        if (ration == null)
         {
             await SendNotFoundAsync(ct);
             return;
         }
 
-        await SendAsync(Result.Success(dto), cancellation: ct);
+        await SendAsync(Result.Success(ration), cancellation: ct);
     }
 }

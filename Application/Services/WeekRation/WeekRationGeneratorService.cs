@@ -5,6 +5,7 @@ using Application.Services.User;
 using Application.Services.UserExcludeProducts;
 using Application.Services.X5Products;
 using Infrastructure.Db.App.Entities;
+using Microsoft.Extensions.Logging;
 using ModuleLLM.Configuration;
 using ModuleLLM.Models.OpenRouter;
 using ModuleLLM.Services;
@@ -110,6 +111,7 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
     private readonly IX5ProductsService _productsService;
     private readonly IUserExcludeProductsService _excludeProductsService;
     private readonly IUserService _userService;
+    private readonly ILogger<WeekRationGeneratorService> _logger;
 
     public WeekRationGeneratorService(
         ILlmApiService llmApi,
@@ -117,7 +119,8 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
         IRppgScanReportService scanReportService,
         IX5ProductsService productsService,
         IUserExcludeProductsService excludeProductsService,
-        IUserService userService)
+        IUserService userService,
+        ILogger<WeekRationGeneratorService> logger)
     {
         _llmApi = llmApi;
         _openRouterConfig = openRouterConfig;
@@ -125,6 +128,7 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
         _productsService = productsService;
         _excludeProductsService = excludeProductsService;
         _userService = userService;
+        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -203,6 +207,7 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
             choices[0].Message is not { } message ||
             string.IsNullOrWhiteSpace(message.Content))
         {
+            _logger.LogError("Модель LLM вернула пустой ответ");
             return new WeekRationGeneratorOutcome(
                 502,
                 new WeekRationResponseDto { Error = "Модель вернула пустой ответ." });
@@ -214,8 +219,9 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
             var jsonText = UnwrapAssistantJsonPayload(message.Content);
             slots = JsonSerializer.Deserialize<List<DayRationMealSlotDto>>(jsonText, RationJsonOptions);
         }
-        catch (JsonException)
+        catch (JsonException e)
         {
+            _logger.LogError(e, "Ошибка парсинга JSON рациона: ");
             return new WeekRationGeneratorOutcome(
                 502,
                 new WeekRationResponseDto

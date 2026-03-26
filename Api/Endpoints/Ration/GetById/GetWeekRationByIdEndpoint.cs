@@ -3,11 +3,12 @@ using Api.Extensions;
 using Application.Models.WeekRation;
 using Application.Services.WeekRation;
 using FastEndpoints;
+using Infrastructure.Db.App.Entities;
 
 namespace Api.Endpoints.Ration.GetById;
 
 /// <summary>Сохранённый недельный рацион по ИД записи <c>WeekRation</c>.</summary>
-public sealed class GetWeekRationByIdEndpoint : Endpoint<WeekRationByIdRouteRequest, WeekRationResponseDto>
+public sealed class GetWeekRationByIdEndpoint : Endpoint<WeekRationByIdRouteRequest, WeekRationEntity>
 {
     private readonly IWeekRationForScanService _rationForScan;
 
@@ -31,13 +32,13 @@ public sealed class GetWeekRationByIdEndpoint : Endpoint<WeekRationByIdRouteRequ
     public override async Task HandleAsync(WeekRationByIdRouteRequest req, CancellationToken ct)
     {
         //var userId = HttpContext.TokenData().UserId;
-        var dto = await _rationForScan.GetStoredRationByIdAsync(req.RationId, ct);
-        if (dto == null || dto.Ration is not { Count: > 0 })
+        var ration = await _rationForScan.GetStoredRationByIdAsync(req.RationId, ct);
+        if (ration == null)
         {
             await SendNotFoundAsync(ct);
             return;
         }
 
-        await SendAsync(dto, cancellation: ct);
+        await SendAsync(ration, cancellation: ct);
     }
 }

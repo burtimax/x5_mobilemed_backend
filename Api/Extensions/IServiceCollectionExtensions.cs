@@ -21,6 +21,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Quartz;
 using Shared.Configs;
+using Shared.Contracts;
 
 namespace Api.Extensions;
 
@@ -67,6 +68,7 @@ public static class IServiceCollectionExtensions
         //services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
         services.AddScoped<SetByUserIdInterceptor>();
+        services.AddSingleton<ILlmUsageJournal, LlmUsageJournalService>();
     }
 
     public static AppConfiguration AddConfigurations(this IServiceCollection services, IConfiguration configuration)

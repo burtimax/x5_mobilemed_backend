@@ -5,7 +5,7 @@ namespace Application.Models.WeekRation;
 /// <summary>Сбор id и привязка <see cref="ProductEntity"/> к позициям и заменам.</summary>
 public static class WeekRationEnrichment
 {
-    public static IReadOnlyList<long> CollectProductIds(IEnumerable<WeekRationMealSlotDto> slots)
+    public static IReadOnlyList<long> CollectProductIds(IEnumerable<DayRationMealSlotDto> slots)
     {
         var ids = new HashSet<long>();
         foreach (var slot in slots)
@@ -22,7 +22,7 @@ public static class WeekRationEnrichment
     }
 
     public static void AttachProducts(
-        IList<WeekRationMealSlotDto> slots,
+        IList<DayRationMealSlotDto> slots,
         IReadOnlyDictionary<long, ProductEntity> productsById)
     {
         foreach (var slot in slots)

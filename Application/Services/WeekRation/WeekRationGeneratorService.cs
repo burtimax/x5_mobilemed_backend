@@ -208,11 +208,11 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
                 new WeekRationResponseDto { Error = "Модель вернула пустой ответ." });
         }
 
-        List<WeekRationMealSlotDto>? slots;
+        List<DayRationMealSlotDto>? slots;
         try
         {
             var jsonText = UnwrapAssistantJsonPayload(message.Content);
-            slots = JsonSerializer.Deserialize<List<WeekRationMealSlotDto>>(jsonText, RationJsonOptions);
+            slots = JsonSerializer.Deserialize<List<DayRationMealSlotDto>>(jsonText, RationJsonOptions);
         }
         catch (JsonException)
         {
@@ -283,7 +283,7 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
         _ => "не указан"
     };
 
-    private static bool IsValidWeekRationSlots(IReadOnlyList<WeekRationMealSlotDto> slots, out string errorMessage)
+    private static bool IsValidWeekRationSlots(IReadOnlyList<DayRationMealSlotDto> slots, out string errorMessage)
     {
         if (slots.Count != 28)
         {

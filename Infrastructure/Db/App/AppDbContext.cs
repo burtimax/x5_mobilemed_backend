@@ -21,6 +21,7 @@ public partial class AppDbContext : DbContext
     public DbSet<UserEntity> Users => Set<UserEntity>();
     public DbSet<UserProfileEntity> UserProfiles => Set<UserProfileEntity>();
     public DbSet<StatEventEntity> StatEvents => Set<StatEventEntity>();
+    public DbSet<LlmUsageEntity> LlmUsages => Set<LlmUsageEntity>();
     public DbSet<UserRppgScanEntity> UserRppgScans => Set<UserRppgScanEntity>();
     public DbSet<UserRppgScanResultItemEntity> UserRppgScanResultItems => Set<UserRppgScanResultItemEntity>();
     public DbSet<ExcludeProductEntity> ExcludeProducts => Set<ExcludeProductEntity>();

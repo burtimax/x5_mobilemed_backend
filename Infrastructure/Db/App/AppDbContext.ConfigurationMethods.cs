@@ -51,6 +51,7 @@ public partial class AppDbContext
 
         // Прикладные таблицы
         builder.Entity<StatEventEntity>().ToTable("stat_events", statSchema);
+        builder.Entity<LlmUsageEntity>().ToTable("llm_usages", statSchema);
         builder.Entity<UserRppgScanEntity>().ToTable("user_rppg_scans", appSchema);
         builder.Entity<UserRppgScanResultItemEntity>().ToTable("user_rppg_scan_result_items", appSchema);
         builder.Entity<ExcludeProductEntity>().ToTable("exclude_products", appSchema);
@@ -116,6 +117,10 @@ public partial class AppDbContext
             .WithMany()
             .HasForeignKey(s => s.UserId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<LlmUsageEntity>()
+            .Property(e => e.InputJson)
+            .HasColumnType("jsonb");
 
         // Настройка связи UserRppgScanEntity -> UserEntity
         builder.Entity<UserRppgScanEntity>()

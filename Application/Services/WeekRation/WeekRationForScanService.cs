@@ -112,7 +112,7 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
         };
     }
 
-    private static List<WeekRationMealSlotDto> MapItemsToSlots(IReadOnlyList<WeekRationItemEntity> items)
+    private static List<DayRationMealSlotDto> MapItemsToSlots(IReadOnlyList<WeekRationItemEntity> items)
     {
         return items
             .GroupBy(i => (i.Day, TypeKey: i.Type.Trim().ToLowerInvariant()))
@@ -121,7 +121,7 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
             .Select(g =>
             {
                 var first = g.First();
-                return new WeekRationMealSlotDto
+                return new DayRationMealSlotDto
                 {
                     Day = g.Key.Day,
                     Type = first.Type,
@@ -131,20 +131,20 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
             .ToList();
     }
 
-    private static WeekRationProductRefDto MapFood(WeekRationItemEntity item)
+    private static DayRationProductRefDto MapFood(WeekRationItemEntity item)
     {
-        return new WeekRationProductRefDto
+        return new DayRationProductRefDto
         {
             Id = item.ProductId,
             Reason = item.Reason,
-            PortionGrams = item.Weigth,
+            Weigth = item.Weigth,
             Product = item.Product,
             Replace = item.Replaces
                 .OrderBy(r => r.Id)
                 .Select(r => new WeekRationProductReplaceCandidateDto
                 {
                     Id = r.ProductId,
-                    PortionGrams = r.Weight,
+                    Weigth = r.Weight,
                     Reason = r.Reason,
                     Product = r.Product
                 })

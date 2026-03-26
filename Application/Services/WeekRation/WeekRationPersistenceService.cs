@@ -18,9 +18,11 @@ public sealed class WeekRationPersistenceService : IWeekRationPersistenceService
     public async Task<Guid> SaveNewRationAsync(
         Guid userId,
         Guid rppgScanId,
-        IReadOnlyList<WeekRationMealSlotDto> slots,
+        IReadOnlyList<DayRationMealSlotDto> slots,
         CancellationToken cancellationToken = default)
     {
+        await EnsureSlotProductsExistAsync(slots, cancellationToken);
+
         var ration = new WeekRationEntity
         {
             UserId = userId,
@@ -36,7 +38,7 @@ public sealed class WeekRationPersistenceService : IWeekRationPersistenceService
                     Type = slot.Type,
                     Day = slot.Day,
                     ProductId = food.Id,
-                    Weigth = food.PortionGrams,
+                    Weigth = food.Weigth,
                     Reason = food.Reason
                 };
                 foreach (var rep in food.Replace ?? [])
@@ -44,7 +46,7 @@ public sealed class WeekRationPersistenceService : IWeekRationPersistenceService
                     item.Replaces.Add(new WeekRationItemReplaceEntity
                     {
                         ProductId = rep.Id,
-                        Weight = rep.PortionGrams,
+                        Weight = rep.Weigth,
                         Reason = null
                     });
                 }
@@ -56,6 +58,58 @@ public sealed class WeekRationPersistenceService : IWeekRationPersistenceService
         _db.WeekRations.Add(ration);
         await _db.SaveChangesAsync(cancellationToken);
         return ration.Id;
+    }
+
+    /// <summary>
+    /// Оставляет только товары, существующие в каталоге: основной ID или замена из <see cref="DayRationProductRefDto.Replace"/>;
+    /// при подстановке замены снимает <see cref="DayRationProductRefDto.Reason"/>. Невалидные варианты замен удаляются.
+    /// </summary>
+    private async Task EnsureSlotProductsExistAsync(
+        IReadOnlyList<DayRationMealSlotDto> slots,
+        CancellationToken cancellationToken)
+    {
+        var allIds = new HashSet<long>();
+        foreach (var slot in slots)
+        {
+            foreach (var food in slot.Food)
+            {
+                allIds.Add(food.Id);
+                foreach (var rep in food.Replace)
+                    allIds.Add(rep.Id);
+            }
+        }
+
+        if (allIds.Count == 0)
+            return;
+
+        var existingIds = await _db.Products
+            .AsNoTracking()
+            .Where(p => allIds.Contains(p.Id))
+            .Select(p => p.Id)
+            .ToListAsync(cancellationToken);
+        var existing = existingIds.ToHashSet();
+
+        foreach (var slot in slots)
+        {
+            foreach (var food in slot.Food)
+            {
+                if (!existing.Contains(food.Id))
+                {
+                    var candidate = food.Replace.FirstOrDefault(r => existing.Contains(r.Id));
+                    if (candidate != null)
+                    {
+                        food.Id = candidate.Id;
+                        food.Weigth = candidate.Weigth;
+                        food.Reason = null;
+                        food.Replace.Remove(candidate);
+                    }
+                }
+
+                food.Replace.RemoveAll(r => !existing.Contains(r.Id));
+            }
+
+            slot.Food.RemoveAll(food => !existing.Contains(food.Id));
+        }
     }
 
     /// <inheritdoc />

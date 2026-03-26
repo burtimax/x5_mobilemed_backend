@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using ModuleLLM.Configuration;
 using ModuleLLM.Models.OpenRouter;
@@ -13,9 +15,15 @@ namespace ModuleLLM.Services;
 
 public class OpenRouterService : ILlmApiService
 {
+    private static readonly JsonSerializerOptions LogJsonOptions = new()
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
     private readonly HttpClient _httpClient;
     private readonly OpenRouterApiConfiguration _config;
     private readonly ILogger<OpenRouterService> _logger;
+    private readonly ILlmUsageJournal _llmUsageJournal;
     private readonly string _baseUrl;
     private readonly string _apiKey;
 
@@ -23,10 +31,12 @@ public class OpenRouterService : ILlmApiService
         IHttpClientFactory httpClientFactory,
         OpenRouterApiConfiguration config,
         ProxyConfiguration proxyConfig,
-        ILogger<OpenRouterService> logger)
+        ILogger<OpenRouterService> logger,
+        ILlmUsageJournal llmUsageJournal)
     {
         _config = config;
         _logger = logger;
+        _llmUsageJournal = llmUsageJournal;
         _baseUrl = _config.BaseUrl.TrimEnd('/');
         _apiKey = _config.ApiKey;
 
@@ -118,6 +128,8 @@ public class OpenRouterService : ILlmApiService
 
         while (attempt < _config.MaxRetryAttempts)
         {
+            string? jsonContent = null;
+            var sw = Stopwatch.StartNew();
             try
             {
                 attempt++;
@@ -128,7 +140,7 @@ public class OpenRouterService : ILlmApiService
 
                 var jsonOptions = new JsonSerializerOptions
                 {
-                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
                 };
 
                 JsonNode? bodyNode;
@@ -138,12 +150,41 @@ public class OpenRouterService : ILlmApiService
                 }
                 catch (JsonException ex)
                 {
-                    return Result.Failure<OpenRouterChatResponse>(
-                        $"Не удалось сформировать тело запроса OpenRouter: {ex.Message}");
+                    sw.Stop();
+                    var err = $"Не удалось сформировать тело запроса OpenRouter: {ex.Message}";
+                    await JournalChatAsync(
+                        SerializeRequestForLog(request),
+                        sw.ElapsedMilliseconds,
+                        false,
+                        null,
+                        err,
+                        null,
+                        null,
+                        request.Model,
+                        null,
+                        null,
+                        cancellationToken);
+                    return Result.Failure<OpenRouterChatResponse>(err);
                 }
 
                 if (bodyNode == null)
-                    return Result.Failure<OpenRouterChatResponse>("Не удалось сформировать тело запроса OpenRouter.");
+                {
+                    sw.Stop();
+                    const string err = "Не удалось сформировать тело запроса OpenRouter.";
+                    await JournalChatAsync(
+                        SerializeRequestForLog(request),
+                        sw.ElapsedMilliseconds,
+                        false,
+                        null,
+                        err,
+                        null,
+                        null,
+                        request.Model,
+                        null,
+                        null,
+                        cancellationToken);
+                    return Result.Failure<OpenRouterChatResponse>(err);
+                }
 
                 if (!string.IsNullOrWhiteSpace(request.ResponseFormatJson))
                 {
@@ -153,12 +194,27 @@ public class OpenRouterService : ILlmApiService
                     }
                     catch (JsonException ex)
                     {
-                        return Result.Failure<OpenRouterChatResponse>(
-                            $"Некорректный JSON в {nameof(OpenRouterChatRequest.ResponseFormatJson)}: {ex.Message}");
+                        sw.Stop();
+                        var err =
+                            $"Некорректный JSON в {nameof(OpenRouterChatRequest.ResponseFormatJson)}: {ex.Message}";
+                        jsonContent = bodyNode.ToJsonString(jsonOptions);
+                        await JournalChatAsync(
+                            jsonContent,
+                            sw.ElapsedMilliseconds,
+                            false,
+                            null,
+                            err,
+                            null,
+                            null,
+                            request.Model,
+                            null,
+                            null,
+                            cancellationToken);
+                        return Result.Failure<OpenRouterChatResponse>(err);
                     }
                 }
 
-                var jsonContent = bodyNode.ToJsonString(jsonOptions);
+                jsonContent = bodyNode.ToJsonString(jsonOptions);
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
                 var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/chat/completions")
@@ -172,13 +228,27 @@ public class OpenRouterService : ILlmApiService
                 if (response.IsSuccessStatusCode)
                 {
                     var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                    sw.Stop();
 
                     if (request.Stream)
                     {
+                        var err =
+                            "Streaming ответы требуют специальной обработки SSE формата.";
                         _logger.LogWarning(
                             "Streaming ответы OpenRouter требуют обработки SSE. Установите stream = false.");
-                        return Result.Failure<OpenRouterChatResponse>(
-                            "Streaming ответы требуют специальной обработки SSE формата.");
+                        await JournalChatAsync(
+                            jsonContent,
+                            sw.ElapsedMilliseconds,
+                            false,
+                            null,
+                            err,
+                            null,
+                            null,
+                            request.Model,
+                            null,
+                            null,
+                            cancellationToken);
+                        return Result.Failure<OpenRouterChatResponse>(err);
                     }
 
                     var chatResponse = JsonSerializer.Deserialize<OpenRouterChatResponse>(
@@ -186,18 +256,62 @@ public class OpenRouterService : ILlmApiService
                         new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                     if (chatResponse == null)
-                        return Result.Failure<OpenRouterChatResponse>("Не удалось десериализовать ответ от OpenRouter");
+                    {
+                        await JournalChatAsync(
+                            jsonContent,
+                            sw.ElapsedMilliseconds,
+                            false,
+                            responseContent,
+                            "Не удалось десериализовать ответ от OpenRouter",
+                            null,
+                            null,
+                            request.Model,
+                            null,
+                            null,
+                            cancellationToken);
+                        return Result.Failure<OpenRouterChatResponse>(
+                            "Не удалось десериализовать ответ от OpenRouter");
+                    }
+
+                    var assistantText = chatResponse.Choices?.FirstOrDefault()?.Message?.Content;
+                    var usage = chatResponse.Usage;
+                    await JournalChatAsync(
+                        jsonContent,
+                        sw.ElapsedMilliseconds,
+                        true,
+                        assistantText,
+                        null,
+                        usage?.PromptTokens,
+                        usage?.CompletionTokens,
+                        string.IsNullOrWhiteSpace(chatResponse.Model) ? request.Model : chatResponse.Model,
+                        LlmUsageJournalSupport.ToDecimalCost(usage?.Cost),
+                        string.IsNullOrWhiteSpace(chatResponse.Id) ? null : chatResponse.Id,
+                        cancellationToken);
 
                     _logger.LogInformation("Успешный ответ от OpenRouter API (попытка {Attempt})", attempt);
                     return Result.Success(chatResponse);
                 }
 
                 var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                sw.Stop();
                 var errorResponse = JsonSerializer.Deserialize<OpenRouterErrorResponse>(
                     errorContent,
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                 var errorMessage = errorResponse?.Error?.Message ?? $"HTTP {response.StatusCode}: {errorContent}";
+
+                await JournalChatAsync(
+                    jsonContent,
+                    sw.ElapsedMilliseconds,
+                    false,
+                    null,
+                    errorMessage,
+                    null,
+                    null,
+                    request.Model,
+                    null,
+                    null,
+                    cancellationToken);
 
                 if (response.StatusCode >= HttpStatusCode.BadRequest &&
                     response.StatusCode < HttpStatusCode.InternalServerError)
@@ -228,11 +342,25 @@ public class OpenRouterService : ILlmApiService
             }
             catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
             {
+                sw.Stop();
                 lastException = ex;
                 _logger.LogWarning(
                     "Таймаут при запросе к OpenRouter API (попытка {Attempt}/{MaxAttempts})",
                     attempt,
                     _config.MaxRetryAttempts);
+
+                await JournalChatAsync(
+                    jsonContent ?? SerializeRequestForLog(request),
+                    sw.ElapsedMilliseconds,
+                    false,
+                    null,
+                    ex.Message,
+                    null,
+                    null,
+                    request.Model,
+                    null,
+                    null,
+                    cancellationToken);
 
                 if (attempt < _config.MaxRetryAttempts)
                 {
@@ -242,12 +370,26 @@ public class OpenRouterService : ILlmApiService
             }
             catch (HttpRequestException ex)
             {
+                sw.Stop();
                 lastException = ex;
                 _logger.LogWarning(
                     ex,
                     "Ошибка сети при запросе к OpenRouter API (попытка {Attempt}/{MaxAttempts})",
                     attempt,
                     _config.MaxRetryAttempts);
+
+                await JournalChatAsync(
+                    jsonContent ?? SerializeRequestForLog(request),
+                    sw.ElapsedMilliseconds,
+                    false,
+                    null,
+                    ex.Message,
+                    null,
+                    null,
+                    request.Model,
+                    null,
+                    null,
+                    cancellationToken);
 
                 if (attempt < _config.MaxRetryAttempts)
                 {
@@ -257,13 +399,29 @@ public class OpenRouterService : ILlmApiService
             }
             catch (Exception ex)
             {
+                sw.Stop();
                 lastException = ex;
                 _logger.LogError(
                     ex,
                     "Неожиданная ошибка при запросе к OpenRouter API (попытка {Attempt}/{MaxAttempts})",
                     attempt,
                     _config.MaxRetryAttempts);
-                return Result.Failure<OpenRouterChatResponse>($"Исключение при запросе: {ex.Message}");
+
+                var errMsg = $"Исключение при запросе: {ex.Message}";
+                await JournalChatAsync(
+                    jsonContent ?? SerializeRequestForLog(request),
+                    sw.ElapsedMilliseconds,
+                    false,
+                    null,
+                    errMsg,
+                    null,
+                    null,
+                    request.Model,
+                    null,
+                    null,
+                    cancellationToken);
+
+                return Result.Failure<OpenRouterChatResponse>(errMsg);
             }
         }
 
@@ -271,4 +429,44 @@ public class OpenRouterService : ILlmApiService
             $"Не удалось выполнить запрос OpenRouter после {_config.MaxRetryAttempts} попыток. " +
             $"Последняя ошибка: {lastException?.Message ?? "Неизвестная ошибка"}");
     }
+
+    private static string SerializeRequestForLog(OpenRouterChatRequest request)
+    {
+        try
+        {
+            return JsonSerializer.Serialize(request, LogJsonOptions);
+        }
+        catch
+        {
+            return "{\"error\":\"request_serialization_failed\"}";
+        }
+    }
+
+    private Task JournalChatAsync(
+        string inputJson,
+        long durationMs,
+        bool isSuccess,
+        string? llmResponse,
+        string? errorMessage,
+        int? promptTokens,
+        int? completionTokens,
+        string? llmModel,
+        decimal? cost,
+        string? llmRequestId,
+        CancellationToken cancellationToken) =>
+        LlmUsageJournalSupport.TryAppendAsync(
+            _llmUsageJournal,
+            _logger,
+            new LlmUsageJournalEntry(
+                inputJson,
+                durationMs,
+                isSuccess,
+                llmResponse,
+                errorMessage,
+                promptTokens,
+                completionTokens,
+                llmModel,
+                cost,
+                llmRequestId),
+            cancellationToken);
 }

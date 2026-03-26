@@ -7,7 +7,7 @@ public interface IWeekRationPersistenceService
     Task<Guid> SaveNewRationAsync(
         Guid userId,
         Guid rppgScanId,
-        IReadOnlyList<WeekRationMealSlotDto> slots,
+        IReadOnlyList<DayRationMealSlotDto> slots,
         CancellationToken cancellationToken = default);
 
     Task DeleteOtherRationsForScanAsync(

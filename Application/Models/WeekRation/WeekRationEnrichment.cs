@@ -12,9 +12,9 @@ public static class WeekRationEnrichment
         {
             foreach (var item in slot.Food ?? [])
             {
-                ids.Add(item.Id);
+                ids.Add(item.ProductId);
                 foreach (var r in item.Replace ?? [])
-                    ids.Add(r.Id);
+                    ids.Add(r.ProductId);
             }
         }
 
@@ -29,9 +29,9 @@ public static class WeekRationEnrichment
         {
             foreach (var item in slot.Food ?? [])
             {
-                item.Product = productsById.TryGetValue(item.Id, out var p) ? p : null;
+                item.Product = productsById.TryGetValue(item.ProductId, out var p) ? p : null;
                 foreach (var r in item.Replace ?? [])
-                    r.Product = productsById.TryGetValue(r.Id, out var rp) ? rp : null;
+                    r.Product = productsById.TryGetValue(r.ProductId, out var rp) ? rp : null;
             }
         }
     }

@@ -37,7 +37,7 @@ public sealed class WeekRationPersistenceService : IWeekRationPersistenceService
                 {
                     Type = slot.Type,
                     Day = slot.Day,
-                    ProductId = food.Id,
+                    ProductId = food.ProductId,
                     Weigth = food.Weigth,
                     Reason = food.Reason
                 };
@@ -45,7 +45,7 @@ public sealed class WeekRationPersistenceService : IWeekRationPersistenceService
                 {
                     item.Replaces.Add(new WeekRationItemReplaceEntity
                     {
-                        ProductId = rep.Id,
+                        ProductId = rep.ProductId,
                         Weight = rep.Weigth,
                         Reason = null
                     });
@@ -73,9 +73,9 @@ public sealed class WeekRationPersistenceService : IWeekRationPersistenceService
         {
             foreach (var food in slot.Food)
             {
-                allIds.Add(food.Id);
+                allIds.Add(food.ProductId);
                 foreach (var rep in food.Replace)
-                    allIds.Add(rep.Id);
+                    allIds.Add(rep.ProductId);
             }
         }
 
@@ -93,22 +93,22 @@ public sealed class WeekRationPersistenceService : IWeekRationPersistenceService
         {
             foreach (var food in slot.Food)
             {
-                if (!existing.Contains(food.Id))
+                if (!existing.Contains(food.ProductId))
                 {
-                    var candidate = food.Replace.FirstOrDefault(r => existing.Contains(r.Id));
+                    var candidate = food.Replace.FirstOrDefault(r => existing.Contains(r.ProductId));
                     if (candidate != null)
                     {
-                        food.Id = candidate.Id;
+                        food.ProductId = candidate.ProductId;
                         food.Weigth = candidate.Weigth;
                         food.Reason = null;
                         food.Replace.Remove(candidate);
                     }
                 }
 
-                food.Replace.RemoveAll(r => !existing.Contains(r.Id));
+                food.Replace.RemoveAll(r => !existing.Contains(r.ProductId));
             }
 
-            slot.Food.RemoveAll(food => !existing.Contains(food.Id));
+            slot.Food.RemoveAll(food => !existing.Contains(food.ProductId));
         }
     }
 

@@ -8,7 +8,8 @@ namespace Application.Models.WeekRation;
 /// <summary>Вариант замены (в JSON только <c>id</c> и <c>weigth</c>).</summary>
 public sealed class WeekRationProductReplaceCandidateDto
 {
-    public long Id { get; set; }
+    public Guid Id { get; set; }
+    public long ProductId { get; set; }
 
     /// <summary>Рекомендуемая порция замены, г (ключ <c>weigth</c>).</summary>
     [JsonPropertyName("weigth")]
@@ -44,7 +45,8 @@ public sealed class WeekRationProductReplaceCandidateDto
 /// <summary>Позиция в списке <see cref="DayRationMealSlotDto.Food"/>.</summary>
 public sealed class DayRationProductRefDto
 {
-    public long Id { get; set; }
+    public Guid Id { get; set; }
+    public long ProductId { get; set; }
 
     /// <summary>Краткая причина выбора (в схеме LLM необязательна).</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

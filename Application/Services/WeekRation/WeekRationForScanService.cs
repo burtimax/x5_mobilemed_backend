@@ -68,6 +68,72 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
     }
 
     /// <inheritdoc />
+    public async Task<WeekRationResponseDto?> ReplaceWeekRationItemAsync(
+        Guid weekRationItemId,
+        long newProductId,
+        int newWeigth,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var productExists = await _db.Products
+            .AnyAsync(p => p.Id == newProductId, cancellationToken);
+        if (!productExists)
+            return null;
+
+        var item = await _db.WeekRationItems
+            .Include(i => i.Replaces)
+            .Include(i => i.WeekRation)
+            .FirstOrDefaultAsync(i => i.Id == weekRationItemId, cancellationToken);
+
+        if (item?.WeekRation == null || item.WeekRation.UserId != userId)
+            return null;
+
+        var oldProductId = item.ProductId;
+        var oldWeigth = item.Weigth;
+        var oldReason = item.Reason;
+
+        if (oldProductId == newProductId)
+        {
+            item.Weigth = newWeigth;
+            await _db.SaveChangesAsync(cancellationToken);
+            return await ReloadRationResponseAsync(item.WeekRationId, cancellationToken);
+        }
+
+        var promoted = item.Replaces.Where(r => r.ProductId == newProductId).ToList();
+        if (promoted.Count > 0)
+        {
+            foreach (var r in promoted)
+                item.Replaces.Remove(r);
+            item.Reason = promoted.First().Reason;
+        }
+        else
+            item.Reason = null;
+
+        if (!item.Replaces.Any(r => r.ProductId == oldProductId))
+        {
+            item.Replaces.Add(new WeekRationItemReplaceEntity
+            {
+                ProductId = oldProductId,
+                Weight = oldWeigth,
+                Reason = oldReason
+            });
+        }
+
+        item.ProductId = newProductId;
+        item.Weigth = newWeigth;
+
+        await _db.SaveChangesAsync(cancellationToken);
+        return await ReloadRationResponseAsync(item.WeekRationId, cancellationToken);
+    }
+
+    private async Task<WeekRationResponseDto?> ReloadRationResponseAsync(Guid rationId, CancellationToken cancellationToken)
+    {
+        var ration = await WeekRationsWithDetails()
+            .FirstOrDefaultAsync(w => w.Id == rationId, cancellationToken);
+        return MapRationToResponse(ration);
+    }
+
+    /// <inheritdoc />
     public async Task<bool> TryQueueRegenerationAsync(
         Guid scanId,
         Guid userId,
@@ -134,7 +200,8 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
     {
         return new DayRationProductRefDto
         {
-            Id = item.ProductId,
+            Id = item.Id,
+            ProductId = item.ProductId,
             Reason = item.Reason,
             Weigth = item.Weigth,
             Product = item.Product,
@@ -142,7 +209,8 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
                 .OrderBy(r => r.Id)
                 .Select(r => new WeekRationProductReplaceCandidateDto
                 {
-                    Id = r.ProductId,
+                    Id = r.Id,
+                    ProductId = r.ProductId,
                     Weigth = r.Weight,
                     Reason = r.Reason,
                     Product = r.Product

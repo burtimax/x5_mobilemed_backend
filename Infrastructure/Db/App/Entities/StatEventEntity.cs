@@ -29,14 +29,12 @@ public class StatEventEntity : BaseEntity
     /// Тип события
     /// </summary>
     [Comment("Тип события")]
-    [MaxLength(30)]
     public string? Type { get; set; }
 
     /// <summary>
     /// Данные о событии
     /// </summary>
     [Comment("Данные о событии")]
-    [MaxLength(100)]
     public string? Data { get; set; }
 
     [Comment("Длительность выполняемого события")]

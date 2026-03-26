@@ -31,9 +31,9 @@ public class StatEventService : IStatEventService
         var statEvent = new StatEventEntity
         {
             SessionId = sessionId,
-            Data = (data ?? "").Substring(0, Math.Min(data?.Length ?? 0, 100)),
+            Data = (data ?? ""),
             UserId = userId,
-            Type = (type ?? "").Substring(0, Math.Min(type?.Length ?? 0, 30)),
+            Type = (type ?? ""),
             DurationSeconds = duration
         };
 

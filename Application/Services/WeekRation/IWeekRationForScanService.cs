@@ -42,7 +42,7 @@ public interface IWeekRationForScanService
     Task<WeekRationEntity?> ReplaceWeekRationItemAsync(
         Guid weekRationItemId,
         long newProductId,
-        int newWeigth,
+        int newWeight,
         Guid userId,
         CancellationToken cancellationToken = default);
 }

@@ -1,7 +1,7 @@
 Команды для миграции БД.
 ```
 # Применять команду в папке проекта
-dotnet ef migrations add AddOrderToWeekRationItem --context AppDbContext --project Infrastructure -o Db/App/Migrations
+dotnet ef migrations add ChangeWeight --context AppDbContext --project Infrastructure -o Db/App/Migrations
 # Удаление последней миграции
 dotnet ef migrations remove --context AppDbContext --project Infrastructure
 # Применение миграции

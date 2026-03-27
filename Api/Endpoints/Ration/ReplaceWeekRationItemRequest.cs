@@ -9,6 +9,6 @@ public sealed class ReplaceWeekRationItemRequest
     /// <summary>Новый основной товар (PLU / идентификатор каталога).</summary>
     public long ProductId { get; set; }
 
-    /// <summary>Вес порции основной позиции, г (орфография как у сущности: weigth).</summary>
-    public int Weigth { get; set; }
+    /// <summary>Вес порции основной позиции, г (орфография как у сущности: weight).</summary>
+    public int Weight { get; set; }
 }

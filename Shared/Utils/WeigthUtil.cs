@@ -1,9 +1,9 @@
 ﻿namespace Application.Utils;
 
-public class WeigthUtil
+public class WeightUtil
 {
-    public static decimal Convert(int weigth, decimal? by100G)
+    public static decimal Convert(int weight, decimal? by100G)
     {
-        return weigth * ((by100G ?? 0) /100);
+        return weight * ((by100G ?? 0) /100);
     }
 }

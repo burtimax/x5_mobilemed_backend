@@ -41,7 +41,7 @@ public sealed class WeekRationPersistenceService : IWeekRationPersistenceService
                     Order = c,
                     Day = slot.Day,
                     ProductId = food.Id,
-                    Weigth = food.Weigth,
+                    Weight = food.Weight,
                     Reason = food.Reason
                 };
 
@@ -50,7 +50,7 @@ public sealed class WeekRationPersistenceService : IWeekRationPersistenceService
                     item.Replaces.Add(new WeekRationItemReplaceEntity
                     {
                         ProductId = rep.Id,
-                        Weight = rep.Weigth,
+                        Weight = rep.Weight,
                         Reason = null
                     });
                 }
@@ -103,7 +103,7 @@ public sealed class WeekRationPersistenceService : IWeekRationPersistenceService
                     if (candidate != null)
                     {
                         food.Id = candidate.Id;
-                        food.Weigth = candidate.Weigth;
+                        food.Weight = candidate.Weight;
                         food.Reason = null;
                         food.Replace.Remove(candidate);
                     }

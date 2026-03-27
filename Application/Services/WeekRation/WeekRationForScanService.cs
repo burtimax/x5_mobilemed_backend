@@ -108,7 +108,7 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
     public async Task<WeekRationEntity?> ReplaceWeekRationItemAsync(
         Guid weekRationItemId,
         long newProductId,
-        int newWeigth,
+        int newWeight,
         Guid userId,
         CancellationToken cancellationToken = default)
     {
@@ -126,12 +126,12 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
             return null;
 
         var oldProductId = item.ProductId;
-        var oldWeigth = item.Weigth;
+        var oldWeight = item.Weight;
         var oldReason = item.Reason;
 
         if (oldProductId == newProductId)
         {
-            item.Weigth = newWeigth;
+            item.Weight = newWeight;
             await _db.SaveChangesAsync(cancellationToken);
             return await ReloadRationEntityAsync(item.WeekRationId, cancellationToken);
         }
@@ -151,13 +151,13 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
             item.Replaces.Add(new WeekRationItemReplaceEntity
             {
                 ProductId = oldProductId,
-                Weight = oldWeigth,
+                Weight = oldWeight,
                 Reason = oldReason
             });
         }
 
         item.ProductId = newProductId;
-        item.Weigth = newWeigth;
+        item.Weight = newWeight;
 
         await _db.SaveChangesAsync(cancellationToken);
         return await ReloadRationEntityAsync(item.WeekRationId, cancellationToken);

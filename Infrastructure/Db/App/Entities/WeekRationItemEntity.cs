@@ -31,9 +31,9 @@ public class WeekRationItemEntity : BaseEntity
 
     public ProductEntity? Product { get; set; }
 
-    /// <summary>Вес порции в граммах (орфография как в контракте LLM: weigth).</summary>
+    /// <summary>Вес порции в граммах (орфография как в контракте LLM: weight).</summary>
     [Comment("Вес порции, г")]
-    public int Weigth { get; set; }
+    public int Weight { get; set; }
 
     [Comment("Краткая причина включения товара")]
     [MaxLength(2000)]
@@ -44,21 +44,21 @@ public class WeekRationItemEntity : BaseEntity
     /// <summary>
     /// Ккал.
     /// </summary>
-    public decimal? Kcal => WeigthUtil.Convert(Weigth, Product?.KcalPer100G);
+    public decimal? Kcal => WeightUtil.Convert(Weight, Product?.KcalPer100G);
 
     /// <summary>
     /// Белки (г).
     /// </summary>
-    public decimal? Proteins => WeigthUtil.Convert(Weigth, Product?.ProteinsGPer100G);
+    public decimal? Proteins => WeightUtil.Convert(Weight, Product?.ProteinsGPer100G);
 
     /// <summary>
     /// Жиры (г).
     /// </summary>
-    public decimal? Fats => WeigthUtil.Convert(Weigth, Product?.FatsGPer100G);
+    public decimal? Fats => WeightUtil.Convert(Weight, Product?.FatsGPer100G);
 
     /// <summary>
     /// Углеводы (г).
     /// </summary>
-    public decimal? Carbs => WeigthUtil.Convert(Weigth, Product?.CarbsGPer100G);
+    public decimal? Carbs => WeightUtil.Convert(Weight, Product?.CarbsGPer100G);
 
 }

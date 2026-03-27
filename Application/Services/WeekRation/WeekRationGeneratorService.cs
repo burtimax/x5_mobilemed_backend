@@ -35,12 +35,12 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
         4. Каждая комбинация (day, type) должна встречаться ровно один раз.
         5. Каждая позиция в массиве food обязана содержать:
            - id: id товара из каталога
-           - weigth: вес в граммах, целое положительное число
+           - weight: вес в граммах, целое положительное число
            - replace: массив от 1 до 5 объектов-замен
            - reason: краткое объяснение выбора позиции, почему товар был подобран в рацион, 1 предложение (до 10 слов)
         6. Каждый объект в replace обязан содержать:
            - id: id товара из каталога
-           - weigth: вес в граммах, целое положительное число
+           - weight: вес в граммах, целое положительное число
         7. Используй только товары из каталога. Не придумывай товары, названия, id и характеристики.
         8. Не включай товары, исключённые пользователем.
         9. При подборе рациона опирайся на:
@@ -94,7 +94,7 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
     //                 "items": {
     //                   "type": "object",
     //                   "additionalProperties": false,
-    //                   "required": ["id", "weigth", "reason", "replace"],
+    //                   "required": ["id", "weight", "reason", "replace"],
     //                   "properties": {
     //                     "id": {
     //                       "type": "integer",
@@ -104,7 +104,7 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
     //                       "type": "string",
     //                       "description": "Одно короткое предложение, почему именно этот товар нужен в рационе. Причина может быть связана с показателями здоровья или КБЖУ. В предложении не должно быть названия товара, кратко и лаконично (до 12 слов)."
     //                     },
-    //                     "weigth": {
+    //                     "weight": {
     //                       "type": "integer",
     //                       "description": "Сколько грамм нужно съесть. Вес порции в граммах."
     //                     },
@@ -116,13 +116,13 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
     //                       "items": {
     //                         "type": "object",
     //                         "additionalProperties": false,
-    //                         "required": ["id", "weigth"],
+    //                         "required": ["id", "weight"],
     //                         "properties": {
     //                           "id": {
     //                             "type": "integer",
     //                             "description": "Идентификатор товара-замены."
     //                           },
-    //                           "weigth": {
+    //                           "weight": {
     //                             "type": "integer",
     //                             "description": "Вес порции товара-замены в граммах."
     //                           }
@@ -171,7 +171,7 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
                     "items": {
                       "type": "object",
                       "additionalProperties": false,
-                      "required": ["id", "weigth", "reason", "replace"],
+                      "required": ["id", "weight", "reason", "replace"],
                       "properties": {
                         "id": {
                           "type": "integer",
@@ -181,7 +181,7 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
                           "type": "string",
                           "description": "Одно короткое предложение, почему именно этот товар нужен в рационе. Причина может быть связана с показателями здоровья или КБЖУ. В предложении не должно быть названия товара, кратко и лаконично (до 10 слов)."
                         },
-                        "weigth": {
+                        "weight": {
                           "type": "integer",
                           "description": "Сколько грамм нужно съесть. Вес порции в граммах."
                         },
@@ -191,13 +191,13 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
                           "items": {
                             "type": "object",
                             "additionalProperties": false,
-                            "required": ["id", "weigth"],
+                            "required": ["id", "weight"],
                             "properties": {
                               "id": {
                                 "type": "integer",
                                 "description": "Идентификатор товара-замены."
                               },
-                              "weigth": {
+                              "weight": {
                                 "type": "integer",
                                 "description": "Вес порции товара-замены в граммах."
                               }

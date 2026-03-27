@@ -5,33 +5,33 @@ using Infrastructure.Db.App.Entities;
 
 namespace Application.Models.WeekRation;
 
-/// <summary>Вариант замены (в JSON только <c>id</c> и <c>weigth</c>).</summary>
+/// <summary>Вариант замены (в JSON только <c>id</c> и <c>weight</c>).</summary>
 public sealed class WeekRationProductReplaceCandidateDto
 {
     public long Id { get; set; }
 
-    /// <summary>Рекомендуемая порция замены, г (ключ <c>weigth</c>).</summary>
-    public int Weigth { get; set; }
+    /// <summary>Рекомендуемая порция замены, г (ключ <c>weight</c>).</summary>
+    public int Weight { get; set; }
 
     /// <summary>
     /// Ккал.
     /// </summary>
-    public decimal? Kcal => WeigthUtil.Convert(Weigth, Product?.KcalPer100G);
+    public decimal? Kcal => WeightUtil.Convert(Weight, Product?.KcalPer100G);
 
     /// <summary>
     /// Белки (г).
     /// </summary>
-    public decimal? Proteins => WeigthUtil.Convert(Weigth, Product?.ProteinsGPer100G);
+    public decimal? Proteins => WeightUtil.Convert(Weight, Product?.ProteinsGPer100G);
 
     /// <summary>
     /// Жиры (г).
     /// </summary>
-    public decimal? Fats => WeigthUtil.Convert(Weigth, Product?.FatsGPer100G);
+    public decimal? Fats => WeightUtil.Convert(Weight, Product?.FatsGPer100G);
 
     /// <summary>
     /// Углеводы (г).
     /// </summary>
-    public decimal? Carbs => WeigthUtil.Convert(Weigth, Product?.CarbsGPer100G);
+    public decimal? Carbs => WeightUtil.Convert(Weight, Product?.CarbsGPer100G);
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ProductEntity? Product { get; set; }
@@ -48,27 +48,27 @@ public sealed class DayRationProductRefDto
     /// <summary>Краткая причина выбора (в схеме LLM необязательна).</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Reason { get; set; }
-    public int Weigth { get; set; }
+    public int Weight { get; set; }
 
     /// <summary>
     /// Ккал.
     /// </summary>
-    public decimal? Kcal => WeigthUtil.Convert(Weigth, Product?.KcalPer100G);
+    public decimal? Kcal => WeightUtil.Convert(Weight, Product?.KcalPer100G);
 
     /// <summary>
     /// Белки (г).
     /// </summary>
-    public decimal? Proteins => WeigthUtil.Convert(Weigth, Product?.ProteinsGPer100G);
+    public decimal? Proteins => WeightUtil.Convert(Weight, Product?.ProteinsGPer100G);
 
     /// <summary>
     /// Жиры (г).
     /// </summary>
-    public decimal? Fats => WeigthUtil.Convert(Weigth, Product?.FatsGPer100G);
+    public decimal? Fats => WeightUtil.Convert(Weight, Product?.FatsGPer100G);
 
     /// <summary>
     /// Углеводы (г).
     /// </summary>
-    public decimal? Carbs => WeigthUtil.Convert(Weigth, Product?.CarbsGPer100G);
+    public decimal? Carbs => WeightUtil.Convert(Weight, Product?.CarbsGPer100G);
 
     public List<WeekRationProductReplaceCandidateDto> Replace { get; set; } = [];
 

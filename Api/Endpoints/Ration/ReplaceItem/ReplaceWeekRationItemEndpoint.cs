@@ -33,7 +33,7 @@ public sealed class ReplaceWeekRationItemEndpoint : Endpoint<ReplaceWeekRationIt
     public override async Task HandleAsync(ReplaceWeekRationItemRequest req, CancellationToken ct)
     {
         var userId = HttpContext.TokenData().UserId;
-        var ration = await _rationForScan.ReplaceWeekRationItemAsync(req.Id, req.ProductId, req.Weigth, userId, ct);
+        var ration = await _rationForScan.ReplaceWeekRationItemAsync(req.Id, req.ProductId, req.Weight, userId, ct);
         if (ration == null)
         {
             await SendNotFoundAsync(ct);

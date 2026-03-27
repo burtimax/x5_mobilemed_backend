@@ -18,4 +18,14 @@ public interface IRppgScanReportService
         Guid scanId,
         Guid userId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Контекст для двухшаговой LLM-генерации рациона: блок фокусных показателей и отчёт без них.
+    /// <c>null</c>, если скан не найден или не принадлежит пользователю.
+    /// </summary>
+    Task<RppgScanRationContext?> GetRationLlmContextForUserAsync(
+        Guid scanId,
+        Guid userId,
+        IReadOnlyCollection<string> focusKeys,
+        CancellationToken cancellationToken = default);
 }

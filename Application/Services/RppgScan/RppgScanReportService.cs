@@ -65,13 +65,79 @@ public sealed class RppgScanReportService : IRppgScanReportService
         return BuildReport(scan, profile, age, genderInt, weight, biomarkers);
     }
 
+    /// <inheritdoc />
+    public async Task<RppgScanRationContext?> GetRationLlmContextForUserAsync(
+        Guid scanId,
+        Guid userId,
+        IReadOnlyCollection<string> focusKeys,
+        CancellationToken cancellationToken = default)
+    {
+        var focus = focusKeys.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var scan = await _db.UserRppgScans
+            .AsNoTracking()
+            .Include(s => s.User!)
+                .ThenInclude(u => u.Profile)
+            .Include(s => s.ResultItems)
+            .FirstOrDefaultAsync(s => s.Id == scanId && s.UserId == userId, cancellationToken);
+
+        if (scan == null)
+            return null;
+
+        var profile = scan.User?.Profile;
+        var age = profile?.Age ?? 30;
+        var genderInt = profile?.Gender.HasValue == true ? (int)profile.Gender!.Value : 0;
+        var weight = profile?.Weight ?? 70m;
+
+        var biomarkerKeys = scan.ResultItems.Select(i => i.Key).Distinct().ToList();
+        var biomarkers = biomarkerKeys.Count == 0
+            ? []
+            : await _db.Biomarkers
+                .AsNoTracking()
+                .Where(b => biomarkerKeys.Contains(b.Key))
+                .Include(b => b.Scales)
+                .ThenInclude(s => s.Zones)
+                .ToListAsync(cancellationToken);
+
+        var focusItems = scan.ResultItems
+            .Where(i => focus.Contains(i.Key))
+            .OrderBy(i => i.Key, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var focusSb = new StringBuilder();
+        for (var idx = 0; idx < focusItems.Count; idx++)
+        {
+            focusSb.AppendLine();
+            focusSb.AppendLine($"{idx + 1}. {FormatIndicatorBlock(focusItems[idx], biomarkers, age, genderInt, weight)}");
+        }
+
+        var focusText = focusItems.Count == 0 ? string.Empty : focusSb.ToString().Trim();
+
+        const string noOtherIndicators =
+            "Нет прочих показателей (все сохранённые показатели входят в набор для клинической расшифровки).";
+
+        var supplementaryText = BuildReport(
+            scan,
+            profile,
+            age,
+            genderInt,
+            weight,
+            biomarkers,
+            itemFilter: i => !focus.Contains(i.Key),
+            noMatchingIndicatorsLine: noOtherIndicators);
+
+        return new RppgScanRationContext(focusText, supplementaryText);
+    }
+
     private static string BuildReport(
         UserRppgScanEntity scan,
         UserProfileEntity? profile,
         int age,
         int genderInt,
         decimal weight,
-        List<BiomarkerEntity> biomarkers)
+        List<BiomarkerEntity> biomarkers,
+        Func<UserRppgScanResultItemEntity, bool>? itemFilter = null,
+        string? noMatchingIndicatorsLine = null)
     {
         var sb = new StringBuilder(4096);
         sb.AppendLine("ОТЧЁТ ПО СКАНУ RPPG");
@@ -103,7 +169,17 @@ public sealed class RppgScanReportService : IRppgScanReportService
             return sb.ToString();
         }
 
-        var ordered = scan.ResultItems.OrderBy(i => i.Key, StringComparer.OrdinalIgnoreCase).ToList();
+        var ordered = scan.ResultItems
+            .Where(i => itemFilter?.Invoke(i) ?? true)
+            .OrderBy(i => i.Key, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (ordered.Count == 0)
+        {
+            sb.AppendLine(noMatchingIndicatorsLine ?? "(нет показателей, соответствующих фильтру).");
+            return sb.ToString();
+        }
+
         var index = 0;
         foreach (var item in ordered)
         {

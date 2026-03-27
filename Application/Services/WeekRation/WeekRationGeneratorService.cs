@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using Application.Models.WeekRation;
 using Application.Services.RppgScan;
@@ -44,12 +45,14 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
         7. Используй только товары из каталога. Не придумывай товары, названия, id и характеристики.
         8. Не включай товары, исключённые пользователем.
         9. При подборе рациона опирайся на:
-           - отчёт сканирования
+           - расшифровку показателей здоровья и списки продуктов из неё (если блок передан в сообщении пользователя)
+           - прочие данные скана (если переданы в сообщении пользователя)
            - целевую калорийность ({0} ккал) и ограничения из профиля
            - предпочтения и исключения пользователя
         10. Рацион должен быть разнообразным: не повторяй одни и те же позиции слишком часто без необходимости.
         11. Замены в replace должны быть реалистичными и близкими по роли в рационе.
         12. Если подходящих товаров мало, всё равно верни корректный JSON строго в указанной структуре.
+        13. Если в сообщении пользователя есть расшифровка показателей (клиническое питание), обязательно учитывай её и разрешённые и нежелательные продукты из неё при выборе позиций только из каталога.
 
         Правила подбора:
         - breakfast — завтрак
@@ -61,6 +64,31 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
         - По возможности распределяй калорийность между приёмами пищи адекватно типу meal.
         - СТРОГО Не используй товары, которые содержат продукты, исключенные пользователем.
         """;
+
+    private const string HealthInterpretationSystemPrompt =
+        """
+        Ты — врач-диетолог и специалист по клиническому питанию, который даёт рекомендации в рамках доказательной медицины.
+        Отвечай строго одним JSON-объектом по схеме ответа API, без markdown, без кодовых блоков и без текста вне JSON.
+        Будь конкретен: называй продукты и практические приёмы; избегай общих фраз без пользы.
+        """;
+
+    private const string FocusBiomarkerKeyLegend =
+        """
+        Соответствие показателей (русское название → ключ в данных):
+        - Гликированный гемоглобин (HbA1c) → hemoglobinA1c
+        - Риск высокого HbA1c → highHemoglobinA1CRisk
+        - Риск высокой глюкозы натощак → highFastingGlucoseRisk
+        - Систолическое давление → bloodPressureSystolic
+        - Диастолическое давление → bloodPressureDiastolic
+        - Риск высокого давления → highBloodPressureRisk
+        - Риск высокого общего холестерина → highTotalCholesterolRisk
+        - Гемоглобин → hemoglobin
+        - Риск низкого гемоглобина → lowHemoglobinRisk
+        - 10-летний риск ASCVD → ascvdRisk
+        - Возраст сердца → heartAge
+        """;
+
+    private const int HealthInterpretationMaxTokens = 8192;
 
     // private static readonly string WeekRationResponseFormatJson =
     //     """
@@ -248,8 +276,12 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        var reportText = await _scanReportService.GetReportTextForUserAsync(request.ScanId, userId, cancellationToken);
-        if (reportText == null)
+        var rationContext = await _scanReportService.GetRationLlmContextForUserAsync(
+            request.ScanId,
+            userId,
+            WeekRationFocusBiomarkerKeys.All,
+            cancellationToken);
+        if (rationContext == null)
         {
             return new WeekRationGeneratorOutcome(
                 404,
@@ -257,6 +289,32 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
                 {
                     Error = "Скан не найден или не принадлежит текущему пользователю."
                 });
+        }
+
+        HealthMetricsInterpretationDto? interpretation = null;
+        if (!string.IsNullOrWhiteSpace(rationContext.FocusMetricsReportText))
+        {
+            var (interpretationData, interpretationFailure) = await InterpretHealthMetricsAsync(
+                rationContext.FocusMetricsReportText,
+                request,
+                cancellationToken);
+            if (interpretationFailure != null)
+                return interpretationFailure;
+            interpretation = interpretationData;
+        }
+
+        string scanBlocksForRation;
+        if (interpretation != null)
+        {
+            scanBlocksForRation =
+                "# Расшифровка показателей здоровья (клиническое питание)\n"
+                + FormatInterpretationForRationPrompt(interpretation);
+            /*+ "\n\n### Прочие данные скана (сырые значения фокусных показателей исключены)\n"
+            + rationContext.SupplementaryReportText;*/
+        }
+        else
+        {
+            scanBlocksForRation = "### Отчёт по скану\n" + rationContext.SupplementaryReportText;
         }
 
         var user = await _userService.GetByIdAsync(userId);
@@ -277,11 +335,10 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
         var catalogText = await _productsService.GetProductsCatalogTextAsync(cancellationToken);
 
         var userMessage =
-            "### Отчёт по скану\n"
-            + reportText
-            + "\n\n### Профиль и калорийность\n"
+            "# Профиль и калорийность\n"
             + profileBlock
-            + "\n\n### Исключённые для пользователя продукты / категории\n"
+            + "\n\n" + scanBlocksForRation
+            + "\n\n## Исключённые для пользователя продукты / категории\n"
             + excludedBlock
             + "\n\n### Каталог товаров (используй только ID из карточек)\n"
             + catalogText
@@ -371,6 +428,113 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
         WeekRationEnrichment.AttachProducts(slots, productsById);
 
         return new WeekRationGeneratorOutcome(200, new WeekRationResponseDto { Ration = slots });
+    }
+
+    private async Task<(HealthMetricsInterpretationDto? Data, WeekRationGeneratorOutcome? Error)> InterpretHealthMetricsAsync(
+        string focusMetricsReportText,
+        WeekRationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userContent =
+            "На основе приведённых ниже показателей здоровья (только они — источник чисел и зон) составь персональные рекомендации по питанию.\n\n"
+            + "1) Кратко объясни, что означают эти показатели и какие цели питания при таких рисках.\n"
+            + "2) Дай практические рекомендации по питанию простым и понятным языком.\n"
+            + "3) Составь расширенный список разрешённых продуктов.\n"
+            + "4) Дай подробный список нежелательных и запрещённых продуктов.\n\n"
+            + "Не давай общих фраз без пользы — нужны конкретные продукты и практические советы.\n\n"
+            + FocusBiomarkerKeyLegend
+            + "\n\n### Данные показателей (фрагмент отчёта скана)\n"
+            + focusMetricsReportText;
+
+        var model = string.IsNullOrWhiteSpace(request.Model) ? _openRouterConfig.Model : request.Model.Trim();
+
+        var chatRequest = new OpenRouterChatRequest
+        {
+            Model = model,
+            Stream = false,
+            Temperature = request.Temperature ?? 0.35,
+            MaxTokens = HealthInterpretationMaxTokens,
+            TopP = request.TopP,
+            ResponseFormatJson = HealthMetricsInterpretationJsonSchema.ResponseFormatJson,
+            Messages =
+            [
+                new OpenRouterMessage { Role = "system", Content = HealthInterpretationSystemPrompt },
+                new OpenRouterMessage { Role = "user", Content = userContent }
+            ]
+        };
+
+        var result = await _llmApi.SendChatCompletionAsync(chatRequest, cancellationToken);
+
+        if (!result.IsSuccess || result.Value is null)
+        {
+            return (null, new WeekRationGeneratorOutcome(
+                502,
+                new WeekRationResponseDto
+                {
+                    Error = result.Error ?? "Ошибка OpenRouter (расшифровка показателей)."
+                }));
+        }
+
+        var choices = result.Value.Choices;
+        if (choices == null || choices.Count == 0 ||
+            choices[0].Message is not { } message ||
+            string.IsNullOrWhiteSpace(message.Content))
+        {
+            _logger.LogError("Модель LLM вернула пустой ответ при расшифровке показателей");
+            return (null, new WeekRationGeneratorOutcome(
+                502,
+                new WeekRationResponseDto { Error = "Модель вернула пустой ответ при расшифровке показателей." }));
+        }
+
+        HealthMetricsInterpretationDto? dto;
+        try
+        {
+            var jsonText = UnwrapAssistantJsonPayload(message.Content);
+            dto = JsonSerializer.Deserialize<HealthMetricsInterpretationDto>(jsonText, RationJsonOptions);
+        }
+        catch (JsonException e)
+        {
+            _logger.LogError(e, "Ошибка парсинга JSON расшифровки показателей");
+            return (null, new WeekRationGeneratorOutcome(
+                502,
+                new WeekRationResponseDto
+                {
+                    Error = "Не удалось разобрать JSON расшифровки показателей.",
+                    RawAssistantContent = message.Content
+                }));
+        }
+
+        if (dto == null)
+        {
+            return (null, new WeekRationGeneratorOutcome(
+                502,
+                new WeekRationResponseDto
+                {
+                    Error = "Ответ расшифровки показателей пуст.",
+                    RawAssistantContent = message.Content
+                }));
+        }
+
+        return (dto, null);
+    }
+
+    private static string FormatInterpretationForRationPrompt(HealthMetricsInterpretationDto dto)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("##### 1) Значение показателей и цели питания");
+        sb.AppendLine(dto.IndicatorMeaningsAndNutritionGoals.Trim());
+        sb.AppendLine();
+        sb.AppendLine("##### 2) Практические рекомендации по питанию");
+        sb.AppendLine(dto.PracticalNutritionRecommendations.Trim());
+        sb.AppendLine();
+        sb.AppendLine("##### 3) Расширенный список разрешённых продуктов");
+        foreach (var line in dto.AllowedProductsExtended)
+            sb.AppendLine("- " + line.Trim());
+        sb.AppendLine();
+        sb.AppendLine("##### 4) Нежелательные и запрещённые продукты");
+        foreach (var line in dto.UndesirableAndForbiddenProducts)
+            sb.AppendLine("- " + line.Trim());
+        return sb.ToString().TrimEnd();
     }
 
     private static string FormatProfileBlock(UserProfileEntity? profile, int? maintenanceKcal)

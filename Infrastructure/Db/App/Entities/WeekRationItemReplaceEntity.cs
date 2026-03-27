@@ -18,7 +18,6 @@ public class WeekRationItemReplaceEntity : BaseEntity
     [Comment("Идентификатор товара-замены из каталога X5")]
     public long ProductId { get; set; }
 
-    [JsonIgnore]
     public ProductEntity? Product { get; set; }
 
     [Comment("Вес порции замены, г")]

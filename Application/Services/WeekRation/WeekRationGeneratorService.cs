@@ -174,7 +174,7 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
             + excludedBlock
             + "\n\n### Каталог товаров (используй только ID из карточек)\n"
             + catalogText
-            + "\n\nСоставь недельный рацион: корневой JSON-массив из 28 элементов (каждый: day, type, food) по схеме.";
+            + $"\n\nСоставь недельный рацион: корневой JSON-массив из 28 элементов (каждый: day, type, food) по схеме. Учти исключающие товары. Постарайся сформировать рацион под ежедневный калораж ({maintenanceKcal}) ккал в день.";
 
         var model = string.IsNullOrWhiteSpace(request.Model) ? _openRouterConfig.Model : request.Model.Trim();
 

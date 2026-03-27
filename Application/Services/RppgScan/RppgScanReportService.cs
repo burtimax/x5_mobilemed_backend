@@ -79,7 +79,6 @@ public sealed class RppgScanReportService : IRppgScanReportService
         sb.AppendLine($"Идентификатор скана: {scan.Id}");
         sb.AppendLine($"Создан: {scan.CreatedAt.ToString("g", Ru)}");
         sb.AppendLine($"Статус: {FormatScanStatus(scan.Status)}");
-        sb.AppendLine($"Генерация рациона: {FormatWeekRationGenerationStatus(scan.WeekRationGenerationStatus)}");
         sb.AppendLine();
         sb.AppendLine("Профиль пользователя (для подбора шкалы):");
         if (profile == null)
@@ -91,6 +90,7 @@ public sealed class RppgScanReportService : IRppgScanReportService
             sb.AppendLine($"  Возраст: {(profile.Age?.ToString(Ru) ?? "не указан (30 по умолчанию)")} лет");
             sb.AppendLine($"  Пол: {FormatGender(profile.Gender)}");
             sb.AppendLine($"  Вес: {(profile.Weight?.ToString(Ru) ?? "не указан (70 по умолчанию)")} кг");
+            sb.AppendLine($"  Рост: {(profile.Height?.ToString(Ru) ?? "не указан (160 по умолчанию)")} см");
         }
 
         sb.AppendLine();
@@ -130,7 +130,9 @@ public sealed class RppgScanReportService : IRppgScanReportService
         sb.AppendLine($"{name} (ключ: {item.Key})");
         sb.AppendLine($"   Значение: {item.Value.ToString(Ru)}{(string.IsNullOrEmpty(item.Unit) ? "" : " " + item.Unit)}");
         if (item.ConfidenceLevel.HasValue)
+        {
             sb.AppendLine($"   Уровень уверенности: {item.ConfidenceLevel}%");
+        }
 
         if (biomarker == null)
         {

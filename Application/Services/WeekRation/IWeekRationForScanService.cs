@@ -21,6 +21,14 @@ public interface IWeekRationForScanService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Пользователь по скану, привязанному к рациону, и его исключения по продуктам:
+    /// рацион → скан (<see cref="WeekRationEntity.RppgScanId"/>) → <see cref="UserRppgScanEntity.UserId"/>.
+    /// </summary>
+    Task<WeekRationOwnerResponse?> GetRationOwnerWithExcludeProductsAsync(
+        Guid rationId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Ставит генерацию рациона в очередь (статус Pending).
     /// </summary>
     /// <returns><c>true</c> если скан найден и принадлежит пользователю.</returns>

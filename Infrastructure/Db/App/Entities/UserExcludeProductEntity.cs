@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Db.App.Entities;
@@ -17,6 +18,7 @@ public class UserExcludeProductEntity : BaseEntity
     /// <summary>
     /// Связь с пользователем.
     /// </summary>
+    [JsonIgnore]
     public UserEntity? User { get; set; }
 
     /// <summary>

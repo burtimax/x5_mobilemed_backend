@@ -66,6 +66,45 @@ public sealed class WeekRationForScanService : IWeekRationForScanService
     }
 
     /// <inheritdoc />
+    public async Task<WeekRationOwnerResponse?> GetRationOwnerWithExcludeProductsAsync(
+        Guid rationId,
+        CancellationToken cancellationToken = default)
+    {
+        var ration = await _db.WeekRations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(w => w.Id == rationId, cancellationToken);
+        if (ration == null)
+            return null;
+
+        var scan = await _db.UserRppgScans
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == ration.RppgScanId, cancellationToken);
+        if (scan == null)
+            return null;
+
+        var userId = scan.UserId;
+
+        var user = await _db.Users
+            .AsNoTracking()
+            .Include(u => u.Profile)
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user == null)
+            return null;
+
+        var excludeProducts = await _db.UserExcludeProducts
+            .AsNoTracking()
+            .Where(e => e.UserId == userId)
+            .OrderBy(e => e.ExcludeProduct)
+            .ToListAsync(cancellationToken);
+
+        return new WeekRationOwnerResponse
+        {
+            User = user,
+            ExcludeProducts = excludeProducts
+        };
+    }
+
+    /// <inheritdoc />
     public async Task<WeekRationEntity?> ReplaceWeekRationItemAsync(
         Guid weekRationItemId,
         long newProductId,

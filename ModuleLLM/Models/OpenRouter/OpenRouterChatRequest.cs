@@ -23,6 +23,9 @@ public class OpenRouterChatRequest
     [JsonPropertyName("stream")]
     public bool Stream { get; set; }
 
+    [JsonPropertyName("provider")]
+    public OpenRouterProviderSettings? Provider { get; set; }
+
     [JsonPropertyName("response_format")]
     public OpenRouterResponseFormat? ResponseFormat { get; set; }
 
@@ -33,6 +36,15 @@ public class OpenRouterChatRequest
     /// </summary>
     [JsonIgnore]
     public string? ResponseFormatJson { get; set; }
+}
+
+public class OpenRouterProviderSettings
+{
+    [JsonPropertyName("sort")]
+    public string? Sort { get; set; }
+
+    [JsonPropertyName("order")]
+    public List<string>? Order { get; set; }
 }
 
 public class OpenRouterResponseFormat

@@ -128,7 +128,7 @@ public sealed class GenerateWeekRationJob : IJob
 
         for (var attempt = 1; attempt <= MaxGenerationAttempts; attempt++)
         {
-            scan.StatusMessage = $"Генерация рациона {scanId} (LLM), попытка {attempt} из {MaxGenerationAttempts}...";
+            scan.StatusMessage = $"Генерирую рацион с помощью ИИ...";
             await db.SaveChangesAsync(ct);
 
             var request = new WeekRationRequest { ScanId = scanId };

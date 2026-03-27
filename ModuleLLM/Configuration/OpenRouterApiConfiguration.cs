@@ -1,3 +1,5 @@
+using ModuleLLM.Models.OpenRouter;
+
 namespace ModuleLLM.Configuration;
 
 public class OpenRouterApiConfiguration
@@ -16,4 +18,10 @@ public class OpenRouterApiConfiguration
     public int MaxRetryAttempts { get; set; } = 3;
 
     public int RetryDelayMs { get; set; } = 1000;
+
+    /// <summary>
+    /// Секция <c>provider</c> для <c>/chat/completions</c>. Подставляется в тело запроса,
+    /// если в <see cref="OpenRouterChatRequest.Provider"/> не задано значение.
+    /// </summary>
+    public OpenRouterProviderSettings? Provider { get; set; }
 }

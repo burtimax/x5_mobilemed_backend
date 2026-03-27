@@ -214,6 +214,9 @@ public class OpenRouterService : ILlmApiService
                     }
                 }
 
+                if (request.Provider == null && _config.Provider is not null)
+                    bodyNode["provider"] = JsonSerializer.SerializeToNode(_config.Provider, jsonOptions);
+
                 jsonContent = bodyNode.ToJsonString(jsonOptions);
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 

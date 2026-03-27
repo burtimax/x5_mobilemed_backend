@@ -59,6 +59,7 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
         - Учитывай баланс рациона на день и на неделю.
         - Не используй несовместимые между собой товары.
         - По возможности распределяй калорийность между приёмами пищи адекватно типу meal.
+        - СТРОГО Не используй товары, которые содержат продукты, исключенные пользователем.
         """;
 
     // private static readonly string WeekRationResponseFormatJson =

@@ -59,6 +59,8 @@ public partial class AppDbContext
         builder.Entity<WeekRationEntity>().ToTable("week_rations", appSchema);
         builder.Entity<WeekRationItemEntity>().ToTable("week_ration_items", appSchema);
         builder.Entity<WeekRationItemReplaceEntity>().ToTable("week_ration_item_replaces", appSchema);
+        builder.Entity<UserFeedbackEntity>().ToTable("user_feedbacks", appSchema);
+        builder.Entity<LogEntity>().ToTable("application_logs", appSchema);
 
         // X5 схема
         builder.Entity<ProductEntity>().ToTable("products", x5Schema);
@@ -117,6 +119,26 @@ public partial class AppDbContext
             .WithMany()
             .HasForeignKey(s => s.UserId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<UserFeedbackEntity>()
+            .HasOne(f => f.User)
+            .WithMany()
+            .HasForeignKey(f => f.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<UserFeedbackEntity>()
+            .Property(f => f.Feedback)
+            .HasColumnType("jsonb");
+
+        builder.Entity<LogEntity>()
+            .HasOne(l => l.User)
+            .WithMany()
+            .HasForeignKey(l => l.UserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<LogEntity>()
+            .Property(l => l.Log)
+            .HasColumnType("jsonb");
 
         builder.Entity<LlmUsageEntity>()
             .Property(e => e.InputJson)

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
@@ -11,6 +10,12 @@ namespace Infrastructure.Db.App.Entities;
 public class UserEntity : IBaseEntity
 {
     public Guid Id { get; set; }
+
+    /// <summary>
+    /// Пользователь подтвердил ознакомление с политикой и документами.
+    /// </summary>
+    [Comment("Пользователь подтвердил ознакомление с политикой и документами.")]
+    public bool? ConfirmedPolicyAndDocuments { get; set; }
 
     /// <summary>
     /// Профиль пользователя

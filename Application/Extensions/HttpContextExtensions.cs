@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Security.Claims;
 using Application.Models.Auth;
@@ -8,6 +8,22 @@ namespace Api.Extensions;
 
 public static class HttpContextExtensions
 {
+    /// <summary>
+    /// Пытается прочитать идентификатор пользователя из JWT без полного набора клеймов
+    /// (для публичных эндпоинтов с опциональной авторизацией).
+    /// </summary>
+    public static bool TryGetUserId(this HttpContext httpContext, out Guid userId)
+    {
+        userId = default;
+
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
+            return false;
+
+        var idClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)
+                      ?? httpContext.User.FindFirst("sub");
+        return idClaim?.Value != null && Guid.TryParse(idClaim.Value, out userId);
+    }
+
     public static UserTokenData TokenData(this HttpContext httpContext)
     {
         UserTokenData userTokenData = new();

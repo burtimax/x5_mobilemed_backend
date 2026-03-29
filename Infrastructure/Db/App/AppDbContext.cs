@@ -34,6 +34,8 @@ public partial class AppDbContext : DbContext
     public DbSet<WeekRationEntity> WeekRations => Set<WeekRationEntity>();
     public DbSet<WeekRationItemEntity> WeekRationItems => Set<WeekRationItemEntity>();
     public DbSet<WeekRationItemReplaceEntity> WeekRationItemReplaces => Set<WeekRationItemReplaceEntity>();
+    public DbSet<UserFeedbackEntity> UserFeedbacks => Set<UserFeedbackEntity>();
+    public DbSet<LogEntity> Logs => Set<LogEntity>();
 
 
     protected override void OnModelCreating(ModelBuilder builder)

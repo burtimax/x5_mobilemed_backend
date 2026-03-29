@@ -119,6 +119,9 @@ namespace Application.Services.User
             if (r.SmokeStatus is not null) profile.SmokeStatus = r.SmokeStatus;
             if (r.Goals is not null) profile.Goals = r.Goals;
 
+            if (r.ConfirmedPolicyAndDocuments is not null)
+                user.ConfirmedPolicyAndDocuments = r.ConfirmedPolicyAndDocuments;
+
             _db.UserProfiles.Update(profile);
             await _db.SaveChangesAsync(cancellation);
 

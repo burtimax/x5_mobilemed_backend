@@ -35,4 +35,9 @@ public class UpdateUserRequest
     /// Цели пользователя
     /// </summary>
     public List<string>? Goals { get; set; }
+
+    /// <summary>
+    /// Пользователь подтвердил ознакомление с политикой и документами.
+    /// </summary>
+    public bool? ConfirmedPolicyAndDocuments { get; set; }
 }

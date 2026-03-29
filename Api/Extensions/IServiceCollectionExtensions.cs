@@ -7,6 +7,8 @@ using Application.Services.Llm;
 using Application.Services.RppgScan;
 using Application.Services.StatEvent;
 using Application.Services.User;
+using Application.Services.UserFeedback;
+using Application.Services.FrontendLog;
 using Application.Services.UserExcludeProducts;
 using Application.Services.WeekRation;
 using Application.Services.X5Products;
@@ -55,6 +57,8 @@ public static class IServiceCollectionExtensions
         services.AddScoped<IX5ProductsService, X5ProductsService>();
 
         services.AddScoped<IStatEventService, StatEventService>();
+        services.AddScoped<IUserFeedbackService, UserFeedbackService>();
+        services.AddScoped<IFrontendLogService, FrontendLogService>();
         services.AddScoped<IRppgScanService, RppgScanService>();
         services.AddScoped<IRppgScanReportService, RppgScanReportService>();
         services.AddScoped<IWeekRationGeneratorService, WeekRationGeneratorService>();

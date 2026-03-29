@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Api.Endpoints.User;
 using Api.Extensions;
 using Application.Services.UserFeedback;
 using FastEndpoints;
@@ -18,8 +19,8 @@ sealed class SaveUserFeedbackEndpoint : Endpoint<SaveUserFeedbackRequest, Result
 
     public override void Configure()
     {
-        Post("user-feedback");
-        Group<AppGroupEndpoints>();
+        Post("feedback");
+        Group<UserGroupEndpoints>();
         Summary(s =>
         {
             s.Summary = "Сохранение фидбека пользователя";

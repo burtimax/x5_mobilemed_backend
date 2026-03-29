@@ -37,7 +37,7 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
         5. Каждая позиция в массиве food обязана содержать:
            - id: id товара из каталога
            - weight: вес в граммах, целое положительное число
-           - replace: массив от 1 до 5 объектов-замен
+           - replace: массив из 3–5 объектов-замен (не меньше трёх альтернатив на каждую позицию)
            - reason: краткое объяснение выбора позиции, почему товар был подобран в рацион, 1 предложение (до 10 слов)
         6. Каждый объект в replace обязан содержать:
            - id: id товара из каталога
@@ -50,7 +50,7 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
            - целевую калорийность: {0} и ограничения из профиля
            - предпочтения и исключения пользователя
         10. Рацион должен быть разнообразным: не повторяй одни и те же позиции слишком часто без необходимости.
-        11. Замены в replace должны быть реалистичными и близкими по роли в рационе.
+        11. Замены в replace должны быть реалистичными и близкими по роли в рационе. У **каждой** позиции в food в массиве replace **обязательно не меньше 3** и **не больше 5** вариантов (если меньше трёх подходящих id в каталоге для слота нереалистично — пересмотри основной выбор так, чтобы на него нашлось ≥3 адекватных замен).
         12. Если подходящих товаров мало, всё равно верни корректный JSON строго в указанной структуре.
         13. Если в сообщении пользователя есть расшифровка показателей (клиническое питание), обязательно учитывай её и разрешённые и нежелательные продукты из неё при выборе позиций только из каталога.
         14. В сообщении пользователя заданы ориентиры по калориям на день и по каждому приёму пищи (в ккал, если удалось вычислить суточную цель). Соблюдай эти ориентиры при подборе весов порций; небольшие отклонения допустимы (порядка нескольких процентов или десятков килокалорий на приём), если суточный баланс в целом сохраняется.
@@ -99,85 +99,6 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
 
     private const int HealthInterpretationMaxTokens = 8192;
 
-    // private static readonly string WeekRationResponseFormatJson =
-    //     """
-    //     {
-    //       "type": "json_schema",
-    //       "json_schema": {
-    //         "name": "week_ration",
-    //         "strict": true,
-    //         "schema": {
-    //           "type": "array",
-    //           "description": "Список приёмов пищи по дням недели. Каждый объект содержит номер дня, тип приёма пищи и список товаров. Для каждого товара указывается идентификатор товара, краткая причина выбора, вес порции в граммах и варианты замены.",
-    //           "items": {
-    //             "type": "object",
-    //             "additionalProperties": false,
-    //             "required": ["day", "type", "food"],
-    //             "properties": {
-    //               "day": {
-    //                 "type": "integer",
-    //                 "minimum": 1,
-    //                 "maximum": 7,
-    //                 "description": "Номер дня недели от 1 до 7."
-    //               },
-    //               "type": {
-    //                 "type": "string",
-    //                 "description": "Тип приёма пищи.",
-    //                 "enum": ["breakfast", "lunch", "snack", "dinner"]
-    //               },
-    //               "food": {
-    //                 "type": "array",
-    //                 "description": "Список товаров для этого приёма пищи.",
-    //                 "items": {
-    //                   "type": "object",
-    //                   "additionalProperties": false,
-    //                   "required": ["id", "weight", "reason", "replace"],
-    //                   "properties": {
-    //                     "id": {
-    //                       "type": "integer",
-    //                       "description": "Идентификатор товара."
-    //                     },
-    //                     "reason": {
-    //                       "type": "string",
-    //                       "description": "Одно короткое предложение, почему именно этот товар нужен в рационе. Причина может быть связана с показателями здоровья или КБЖУ. В предложении не должно быть названия товара, кратко и лаконично (до 12 слов)."
-    //                     },
-    //                     "weight": {
-    //                       "type": "integer",
-    //                       "description": "Сколько грамм нужно съесть. Вес порции в граммах."
-    //                     },
-    //                     "replace": {
-    //                       "type": "array",
-    //                       "minItems": 1,
-    //                       "maxItems": 5,
-    //                       "description": "Список товаров, которыми можно заменить данный товар в этом приёме пищи. Нужно предложить от 1 до 5 вариантов.",
-    //                       "items": {
-    //                         "type": "object",
-    //                         "additionalProperties": false,
-    //                         "required": ["id", "weight"],
-    //                         "properties": {
-    //                           "id": {
-    //                             "type": "integer",
-    //                             "description": "Идентификатор товара-замены."
-    //                           },
-    //                           "weight": {
-    //                             "type": "integer",
-    //                             "description": "Вес порции товара-замены в граммах."
-    //                           }
-    //                         }
-    //                       }
-    //                     }
-    //                   }
-    //                 }
-    //               }
-    //             }
-    //           }
-    //         }
-    //       }
-    //     }
-    //     """;
-
-
-    // ANTHROPIC CLAUDE
     private static readonly string WeekRationResponseFormatJson =
         """
         {
@@ -195,6 +116,8 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
                 "properties": {
                   "day": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 7,
                     "description": "Номер дня недели от 1 до 7."
                   },
                   "type": {
@@ -216,7 +139,7 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
                         },
                         "reason": {
                           "type": "string",
-                          "description": "Одно короткое предложение, почему именно этот товар нужен в рационе. Причина может быть связана с показателями здоровья или КБЖУ. В предложении не должно быть названия товара, кратко и лаконично (до 10 слов)."
+                          "description": "Одно короткое предложение, почему именно этот товар нужен в рационе. Причина может быть связана с показателями здоровья или КБЖУ. В предложении не должно быть названия товара, кратко и лаконично (до 12 слов)."
                         },
                         "weight": {
                           "type": "integer",
@@ -224,7 +147,9 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
                         },
                         "replace": {
                           "type": "array",
-                          "description": "Список товаров, которыми можно заменить данный товар в этом приёме пищи. Нужно предложить от 1 до 5 вариантов.",
+                          "minItems": 3,
+                          "maxItems": 5,
+                          "description": "Список товаров, которыми можно заменить данный товар в этом приёме пищи. Нужно предложить от 3 до 5 вариантов.",
                           "items": {
                             "type": "object",
                             "additionalProperties": false,
@@ -250,6 +175,83 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
           }
         }
         """;
+
+
+    // // ANTHROPIC CLAUDE
+    // private static readonly string WeekRationResponseFormatJson =
+    //     """
+    //     {
+    //       "type": "json_schema",
+    //       "json_schema": {
+    //         "name": "week_ration",
+    //         "strict": true,
+    //         "schema": {
+    //           "type": "array",
+    //           "description": "Список приёмов пищи по дням недели. Каждый объект содержит номер дня, тип приёма пищи и список товаров. Для каждого товара указывается идентификатор товара, краткая причина выбора, вес порции в граммах и варианты замены.",
+    //           "items": {
+    //             "type": "object",
+    //             "additionalProperties": false,
+    //             "required": ["day", "type", "food"],
+    //             "properties": {
+    //               "day": {
+    //                 "type": "integer",
+    //                 "description": "Номер дня недели от 1 до 7."
+    //               },
+    //               "type": {
+    //                 "type": "string",
+    //                 "description": "Тип приёма пищи.",
+    //                 "enum": ["breakfast", "lunch", "snack", "dinner"]
+    //               },
+    //               "food": {
+    //                 "type": "array",
+    //                 "description": "Список товаров для этого приёма пищи.",
+    //                 "items": {
+    //                   "type": "object",
+    //                   "additionalProperties": false,
+    //                   "required": ["id", "weight", "reason", "replace"],
+    //                   "properties": {
+    //                     "id": {
+    //                       "type": "integer",
+    //                       "description": "Идентификатор товара."
+    //                     },
+    //                     "reason": {
+    //                       "type": "string",
+    //                       "description": "Одно короткое предложение, почему именно этот товар нужен в рационе. Причина может быть связана с показателями здоровья или КБЖУ. В предложении не должно быть названия товара, кратко и лаконично (до 10 слов)."
+    //                     },
+    //                     "weight": {
+    //                       "type": "integer",
+    //                       "description": "Сколько грамм нужно съесть. Вес порции в граммах."
+    //                     },
+    //                     "replace": {
+    //                       "type": "array",
+    //                       "description": "Список товаров, которыми можно заменить данный товар в этом приёме пищи. Обязательно от 3 до 5 вариантов.",
+    //                       "minItems": 3,
+    //                       "maxItems": 5,
+    //                       "items": {
+    //                         "type": "object",
+    //                         "additionalProperties": false,
+    //                         "required": ["id", "weight"],
+    //                         "properties": {
+    //                           "id": {
+    //                             "type": "integer",
+    //                             "description": "Идентификатор товара-замены."
+    //                           },
+    //                           "weight": {
+    //                             "type": "integer",
+    //                             "description": "Вес порции товара-замены в граммах."
+    //                           }
+    //                         }
+    //                       }
+    //                     }
+    //                   }
+    //                 }
+    //               }
+    //             }
+    //           }
+    //         }
+    //       }
+    //     }
+    //     """;
 
     private static readonly string[] WeekRationMealTypes = ["breakfast", "lunch", "snack", "dinner"];
 
@@ -678,6 +680,22 @@ public sealed class WeekRationGeneratorService : IWeekRationGeneratorService
                 if (!seen.Contains((d, t)))
                 {
                     errorMessage = "Не хватает приёма пищи для полной недели (каждая пара день + тип должна быть ровно один раз).";
+                    return false;
+                }
+            }
+        }
+
+        const int minReplaces = 3;
+        const int maxReplaces = 5;
+        foreach (var s in slots)
+        {
+            foreach (var f in s.Food)
+            {
+                var n = f.Replace?.Count ?? 0;
+                if (n is < minReplaces or > maxReplaces)
+                {
+                    errorMessage =
+                        $"У позиции товара id={f.Id} (день {s.Day}, {s.Type}) в replace должно быть от {minReplaces} до {maxReplaces} альтернатив, сейчас {n}.";
                     return false;
                 }
             }

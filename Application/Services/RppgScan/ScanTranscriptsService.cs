@@ -11,6 +11,11 @@ namespace Application.Services.RppgScan;
 /// </summary>
 public class ScanTranscriptsService : IScanTranscriptsService
 {
+    private const string StatusNormal = "В норме";
+    private const string StatusAbove = "Выше нормы";
+    private const string StatusBelow = "Ниже нормы";
+    private const string StatusAttention = "Требует внимания";
+
     private readonly AppDbContext _db;
 
     public ScanTranscriptsService(AppDbContext db)
@@ -63,6 +68,9 @@ public class ScanTranscriptsService : IScanTranscriptsService
                 continue;
             }
 
+            if (!biomarker.IsActive)
+                continue;
+
             var scale = SelectMatchingScale(biomarker, genderInt, age, weight);
             if (scale == null)
             {
@@ -70,7 +78,8 @@ public class ScanTranscriptsService : IScanTranscriptsService
                 continue;
             }
 
-            var zones = string.Equals(item.Key, "heartAge", StringComparison.OrdinalIgnoreCase)
+            var isHeartAge = string.Equals(item.Key, "heartAge", StringComparison.OrdinalIgnoreCase);
+            var zones = isHeartAge
                 ? BuildHeartAgeZones(scale, age)
                 : GetThreeClosestZones(scale, (double)item.Value);
             var matchingZone = GetMatchingZone(zones, (double)item.Value);
@@ -83,6 +92,7 @@ public class ScanTranscriptsService : IScanTranscriptsService
                 DescriptionUser = biomarker.DescriptionUser,
                 CommentUser = matchingZone?.CommentUser ?? string.Empty,
                 Color = matchingZone?.ZoneKey ?? string.Empty,
+                Status = ComputeTranscriptItemStatus(scale, (double)item.Value, isHeartAge, zones),
                 ConfidenceLevel = item.ConfidenceLevel ?? 0,
                 Zones = zones,
                 ScaleMetadata = BuildScaleMetadata(zones, item.Value)
@@ -226,6 +236,101 @@ public class ScanTranscriptsService : IScanTranscriptsService
 
         var centerIndex = zones.Count / 2;
         return zones[centerIndex];
+    }
+
+    /// <summary>
+    /// Текстовый статус для пользователя по ключу зоны на полной шкале (или локальных зон heartAge).
+    /// </summary>
+    private static string? ComputeTranscriptItemStatus(
+        BiomarkerScaleEntity scale,
+        double value,
+        bool isHeartAge,
+        List<ScanTranscriptItemZone> transcriptZones)
+    {
+        if (isHeartAge)
+            return ComputeStatusHeartAge(transcriptZones, value);
+
+        var match = FindMatchingDbZone(scale, value);
+        if (match?.ZoneKey == null)
+            return StatusAttention;
+
+        if (match.ZoneKey.Equals("green", StringComparison.OrdinalIgnoreCase))
+            return StatusNormal;
+        if (match.ZoneKey.Equals("red", StringComparison.OrdinalIgnoreCase))
+            return StatusAttention;
+        if (match.ZoneKey.Equals("yellow", StringComparison.OrdinalIgnoreCase))
+            return ComputeYellowStatusRelativeToGreen(scale, value);
+
+        return StatusAttention;
+    }
+
+    private static string ComputeYellowStatusRelativeToGreen(BiomarkerScaleEntity scale, double value)
+    {
+        var green = scale.Zones.FirstOrDefault(z =>
+            z.ZoneKey != null &&
+            z.ZoneKey.Equals("green", StringComparison.OrdinalIgnoreCase) &&
+            z.ValueFrom.HasValue);
+        if (green == null)
+            return StatusAttention;
+
+        var gFrom = (double)green.ValueFrom!.Value;
+        var gTo = green.ValueTo.HasValue ? (double)green.ValueTo.Value : double.MaxValue;
+
+        if (value < gFrom)
+            return StatusBelow;
+        if (value > gTo)
+            return StatusAbove;
+
+        var mid = (gFrom + gTo) / 2;
+        return value < mid ? StatusBelow : StatusAbove;
+    }
+
+    private static BiomarkerZoneEntity? FindMatchingDbZone(BiomarkerScaleEntity scale, double value)
+    {
+        var zones = scale.Zones
+            .Where(z => z.ZoneKey != null && z.ValueFrom.HasValue)
+            .OrderBy(z => z.ValueFrom)
+            .ToList();
+        foreach (var z in zones)
+        {
+            var from = (double)z.ValueFrom!.Value;
+            var to = z.ValueTo.HasValue ? (double)z.ValueTo.Value : double.MaxValue;
+            if (value >= from && value <= to)
+                return z;
+        }
+
+        return null;
+    }
+
+    private static string? ComputeStatusHeartAge(List<ScanTranscriptItemZone> zones, double value)
+    {
+        if (zones == null || zones.Count == 0)
+            return null;
+
+        var match = zones.FirstOrDefault(z => value >= z.From && value <= z.To);
+        if (match?.ZoneKey == null)
+            return StatusAttention;
+
+        if (match.ZoneKey.Equals("green", StringComparison.OrdinalIgnoreCase))
+            return StatusNormal;
+        if (match.ZoneKey.Equals("red", StringComparison.OrdinalIgnoreCase))
+            return StatusAttention;
+        if (!match.ZoneKey.Equals("yellow", StringComparison.OrdinalIgnoreCase))
+            return StatusAttention;
+
+        var green = zones.FirstOrDefault(z =>
+            z.ZoneKey != null &&
+            z.ZoneKey.Equals("green", StringComparison.OrdinalIgnoreCase));
+        if (green == null)
+            return StatusAttention;
+
+        if (value < green.From)
+            return StatusBelow;
+        if (value > green.To)
+            return StatusAbove;
+
+        var mid = (green.From + green.To) / 2;
+        return value < mid ? StatusBelow : StatusAbove;
     }
 
     /// <summary>

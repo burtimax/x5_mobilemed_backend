@@ -105,7 +105,7 @@ public sealed class RppgScanReportService : IRppgScanReportService
 
         var orderByKey = biomarkers.ToDictionary(b => b.Key, b => b.Order, StringComparer.OrdinalIgnoreCase);
         var focusItems = scan.ResultItems
-            .Where(i => focus.Contains(i.Key))
+            .Where(i => focus.Contains(i.Key) && IsBiomarkerActiveForDisplay(i.Key, biomarkers))
             .OrderBy(i => orderByKey.TryGetValue(i.Key, out var ord) ? ord : int.MaxValue)
             .ThenBy(i => i.Key, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -178,6 +178,7 @@ public sealed class RppgScanReportService : IRppgScanReportService
         var orderByKey = biomarkers.ToDictionary(b => b.Key, b => b.Order, StringComparer.OrdinalIgnoreCase);
         var ordered = scan.ResultItems
             .Where(i => itemFilter?.Invoke(i) ?? true)
+            .Where(i => IsBiomarkerActiveForDisplay(i.Key, biomarkers))
             .OrderBy(i => orderByKey.TryGetValue(i.Key, out var ord) ? ord : int.MaxValue)
             .ThenBy(i => i.Key, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -329,6 +330,15 @@ public sealed class RppgScanReportService : IRppgScanReportService
         Gender.Female => "женский",
         _ => "не указан (используется мужской, 0)"
     };
+
+    /// <summary>
+    /// Показатели без записи в справочнике оставляем в отчёте; скрываем только помеченные как неактивные.
+    /// </summary>
+    private static bool IsBiomarkerActiveForDisplay(string itemKey, List<BiomarkerEntity> biomarkers)
+    {
+        var b = biomarkers.Find(x => string.Equals(x.Key, itemKey, StringComparison.OrdinalIgnoreCase));
+        return b == null || b.IsActive;
+    }
 
     private static BiomarkerScaleEntity? SelectMatchingScale(
         BiomarkerEntity biomarker,

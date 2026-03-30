@@ -42,6 +42,12 @@ public class BiomarkerEntity
     public int Order { get; set; }
 
     /// <summary>
+    /// Учитывать показатель при отображении скана (распознавание, отчёты, транскрипты для клиента).
+    /// </summary>
+    [Comment("Активен для отображения в сканах")]
+    public bool IsActive { get; set; } = true;
+
+    /// <summary>
     /// Техническое описание параметра.
     /// </summary>
     [Comment("Техническое описание параметра")]

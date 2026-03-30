@@ -11,6 +11,7 @@ public class ScanTranscriptItem
     public decimal Value { get; set; }
 
     public string? ValueAlias => GetValueAlias();
+    public string? Status { get; set; }
     public string Color { get; set; }
     public string Name { get; set; }
     public string Unit { get; set; }

@@ -7,11 +7,12 @@ namespace Application.Services.BootstrapDatabase;
 /// </summary>
 internal record BiomarkerSeedDto(
     string Key,
+    [property: JsonPropertyName("order")] int? Order,
+    [property: JsonPropertyName("is_active")] bool? IsActive,
     string Name,
     string? Unit,
     string Description,
     [property: JsonPropertyName("descriptionUser")] string DescriptionUser,
-    [property: JsonPropertyName("order")] int? Order,
     List<BiomarkerScaleSeedDto> Scales
 );
 

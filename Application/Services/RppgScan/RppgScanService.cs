@@ -87,8 +87,26 @@ public class RppgScanService : IRppgScanService
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.UserId == scan.UserId, ct);
 
+        List<UserRppgScanResultItemEntity> visibleItems;
+        if (items.Count == 0)
+        {
+            visibleItems = [];
+        }
+        else
+        {
+            var keys = items.Select(i => i.Key).Distinct().ToList();
+            var inactiveKeys = await _db.Biomarkers.AsNoTracking()
+                .Where(b => keys.Contains(b.Key) && !b.IsActive)
+                .Select(b => b.Key)
+                .ToListAsync(ct);
+            var inactive = inactiveKeys.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            visibleItems = items.Where(i => !inactive.Contains(i.Key)).ToList();
+        }
+
+        scan.ResultItems = visibleItems;
+
         var transcripts = await _scanTranscriptsService.BuildTranscriptsAsync(
-            items,
+            visibleItems,
             profile?.Age,
             profile?.Gender,
             profile?.Weight,

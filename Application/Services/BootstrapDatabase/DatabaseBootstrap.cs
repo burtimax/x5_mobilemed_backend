@@ -64,7 +64,8 @@ public class DatabaseBootstrap : IDatabaseBootstrap
                 Unit = dto.Unit,
                 Description = dto.Description,
                 DescriptionUser = dto.DescriptionUser,
-                Order = dto.Order ?? index
+                Order = dto.Order ?? index,
+                IsActive = dto.IsActive ?? true
             };
 
             foreach (var scaleDto in dto.Scales)

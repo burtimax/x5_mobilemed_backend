@@ -60,6 +60,8 @@ public sealed class RppgScanReportService : IRppgScanReportService
                 .Where(b => biomarkerKeys.Contains(b.Key))
                 .Include(b => b.Scales)
                 .ThenInclude(s => s.Zones)
+                .OrderBy(b => b.Order)
+                .ThenBy(b => b.Key)
                 .ToListAsync(cancellationToken);
 
         return BuildReport(scan, profile, age, genderInt, weight, biomarkers);
@@ -97,11 +99,15 @@ public sealed class RppgScanReportService : IRppgScanReportService
                 .Where(b => biomarkerKeys.Contains(b.Key))
                 .Include(b => b.Scales)
                 .ThenInclude(s => s.Zones)
+                .OrderBy(b => b.Order)
+                .ThenBy(b => b.Key)
                 .ToListAsync(cancellationToken);
 
+        var orderByKey = biomarkers.ToDictionary(b => b.Key, b => b.Order, StringComparer.OrdinalIgnoreCase);
         var focusItems = scan.ResultItems
             .Where(i => focus.Contains(i.Key))
-            .OrderBy(i => i.Key, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(i => orderByKey.TryGetValue(i.Key, out var ord) ? ord : int.MaxValue)
+            .ThenBy(i => i.Key, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         var focusSb = new StringBuilder();
@@ -169,9 +175,11 @@ public sealed class RppgScanReportService : IRppgScanReportService
             return sb.ToString();
         }
 
+        var orderByKey = biomarkers.ToDictionary(b => b.Key, b => b.Order, StringComparer.OrdinalIgnoreCase);
         var ordered = scan.ResultItems
             .Where(i => itemFilter?.Invoke(i) ?? true)
-            .OrderBy(i => i.Key, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(i => orderByKey.TryGetValue(i.Key, out var ord) ? ord : int.MaxValue)
+            .ThenBy(i => i.Key, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         if (ordered.Count == 0)
@@ -246,9 +254,11 @@ public sealed class RppgScanReportService : IRppgScanReportService
         sb.AppendLine("   Шкала (все зоны):");
         foreach (var z in zones.OrderBy(z => z.From))
         {
-            var range = string.IsNullOrWhiteSpace(z.FromToAlias)
-                ? $"{z.From.ToString(Ru)} … {FormatUpperBound(z.To)}"
-                : z.FromToAlias;
+            var range = !string.IsNullOrWhiteSpace(z.ValueAlias)
+                ? z.ValueAlias
+                : string.IsNullOrWhiteSpace(z.FromToAlias)
+                    ? $"{z.From.ToString(Ru)} … {FormatUpperBound(z.To)}"
+                    : z.FromToAlias;
             var mark = valueD >= z.From && valueD <= z.To ? "  ← текущее значение" : "";
             sb.AppendLine($"     • {FormatZoneKeyRu(z.ZoneKey)}: {range}{mark}");
         }
@@ -339,11 +349,11 @@ public sealed class RppgScanReportService : IRppgScanReportService
         return
         [
             new ReportZone("green", age - 20, age - 1e-6,
-                comments.GetValueOrDefault("green", string.Empty), $"< {age}"),
+                comments.GetValueOrDefault("green", string.Empty), $"< {age}", null),
             new ReportZone("yellow", age, age + 5 - 1e-6,
-                comments.GetValueOrDefault("yellow", string.Empty), $"{age} — {age + 5}"),
+                comments.GetValueOrDefault("yellow", string.Empty), $"{age} — {age + 5}", null),
             new ReportZone("red", age + 5, age + 20,
-                comments.GetValueOrDefault("red", string.Empty), $"{age + 5}+")
+                comments.GetValueOrDefault("red", string.Empty), $"{age + 5}+", null)
         ];
     }
 
@@ -357,7 +367,8 @@ public sealed class RppgScanReportService : IRppgScanReportService
                 (double)(z.ValueFrom ?? 0m),
                 z.ValueTo.HasValue ? (double)z.ValueTo.Value : double.MaxValue,
                 z.CommentUser ?? string.Empty,
-                z.FromToAlias ?? string.Empty))
+                z.FromToAlias ?? string.Empty,
+                z.ValueAlias))
             .ToList();
     }
 
@@ -385,5 +396,6 @@ public sealed class RppgScanReportService : IRppgScanReportService
         double From,
         double To,
         string CommentUser,
-        string FromToAlias);
+        string FromToAlias,
+        string? ValueAlias);
 }

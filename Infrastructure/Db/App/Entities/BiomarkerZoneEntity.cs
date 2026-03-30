@@ -67,4 +67,11 @@ public class BiomarkerZoneEntity
     [Comment("Человекочитаемый алиас диапазона (например, 60 - 100, < 50, 110 +)")]
     [MaxLength(32)]
     public string? FromToAlias { get; set; }
+
+    /// <summary>
+    /// Краткая подпись значения для отображения (например, «Норма» при более длинном from_to_alias).
+    /// </summary>
+    [Comment("Алиас значения для отображения")]
+    [MaxLength(32)]
+    public string? ValueAlias { get; set; }
 }

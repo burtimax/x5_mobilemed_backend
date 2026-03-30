@@ -42,8 +42,17 @@ public class ScanTranscriptsService : IScanTranscriptsService
             .ToListAsync(ct);
 
         var result = new List<ScanTranscriptItem>();
+        var orderedItems = scanItems
+            .OrderBy(i =>
+            {
+                var b = biomarkers.FirstOrDefault(x =>
+                    string.Equals(x.Key, i.Key, StringComparison.OrdinalIgnoreCase));
+                return b?.Order ?? int.MaxValue;
+            })
+            .ThenBy(i => i.Key, StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
-        foreach (var item in scanItems)
+        foreach (var item in orderedItems)
         {
             var biomarker = biomarkers.FirstOrDefault(b =>
                 string.Equals(b.Key, item.Key, StringComparison.OrdinalIgnoreCase));
@@ -115,7 +124,8 @@ public class ScanTranscriptsService : IScanTranscriptsService
                 From = age - 20,
                 To = age - 1e-6,
                 CommentUser = comments.GetValueOrDefault("green", string.Empty),
-                FromToAlias = $"< {age}"
+                FromToAlias = $"< {age}",
+                ValueAlias = null
             },
             new ScanTranscriptItemZone
             {
@@ -123,7 +133,8 @@ public class ScanTranscriptsService : IScanTranscriptsService
                 From = age,
                 To = age + 5 - 1e-6,
                 CommentUser = comments.GetValueOrDefault("yellow", string.Empty),
-                FromToAlias = $"{age} - {age + 5}"
+                FromToAlias = $"{age} - {age + 5}",
+                ValueAlias = null
             },
             new ScanTranscriptItemZone
             {
@@ -131,7 +142,8 @@ public class ScanTranscriptsService : IScanTranscriptsService
                 From = age + 5,
                 To = age + 20,
                 CommentUser = comments.GetValueOrDefault("red", string.Empty),
-                FromToAlias = $"{age + 5} +"
+                FromToAlias = $"{age + 5} +",
+                ValueAlias = null
             }
         ];
     }
@@ -195,7 +207,8 @@ public class ScanTranscriptsService : IScanTranscriptsService
             From = (double)(zone.ValueFrom ?? 0m),
             To = (double)(zone.ValueTo ?? 0m),
             CommentUser = zone.CommentUser ?? string.Empty,
-            FromToAlias = zone.FromToAlias ?? string.Empty
+            FromToAlias = zone.FromToAlias ?? string.Empty,
+            ValueAlias = zone.ValueAlias
         };
     }
 
@@ -277,7 +290,8 @@ public class ScanTranscriptsService : IScanTranscriptsService
                 PercentFrom = (int)Math.Round(Math.Clamp((z.From - scaleMin) / range * 100, 0, 100)),
                 PercentTo = (int)Math.Round(Math.Clamp((z.To - scaleMin) / range * 100, 0, 100)),
                 Color = z.ZoneKey,
-                FromToAlias = z.FromToAlias ?? string.Empty
+                FromToAlias = z.FromToAlias,
+                ValueAlias = z.ValueAlias
             })
             .ToList();
 

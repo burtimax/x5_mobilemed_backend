@@ -12,5 +12,6 @@ public class ScanResultScaleDataItem
     public int PercentFrom { get; set; }
     public int PercentTo { get; set; }
     public string Color { get; set; }
-    public string FromToAlias { get; set; }
+    public string? FromToAlias { get; set; }
+    public string? ValueAlias { get; set; }
 }

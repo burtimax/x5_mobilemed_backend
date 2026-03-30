@@ -11,6 +11,7 @@ internal record BiomarkerSeedDto(
     string? Unit,
     string Description,
     [property: JsonPropertyName("descriptionUser")] string DescriptionUser,
+    [property: JsonPropertyName("order")] int? Order,
     List<BiomarkerScaleSeedDto> Scales
 );
 
@@ -32,5 +33,6 @@ internal record BiomarkerZoneSeedDto(
     string? Rule,
     string Comment,
     [property: JsonPropertyName("commentUser")] string? CommentUser,
-    [property: JsonPropertyName("from_to_alias")] string? FromToAlias
+    [property: JsonPropertyName("from_to_alias")] string? FromToAlias,
+    [property: JsonPropertyName("value_alias")] string? ValueAlias
 );

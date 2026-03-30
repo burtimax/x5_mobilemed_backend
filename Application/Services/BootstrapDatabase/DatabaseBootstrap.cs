@@ -54,15 +54,17 @@ public class DatabaseBootstrap : IDatabaseBootstrap
             return;
         }
 
-        foreach (var dto in seedData)
+        for (var index = 0; index < seedData.Count; index++)
         {
+            var dto = seedData[index];
             var biomarker = new BiomarkerEntity
             {
                 Key = dto.Key,
                 Name = dto.Name,
                 Unit = dto.Unit,
                 Description = dto.Description,
-                DescriptionUser = dto.DescriptionUser
+                DescriptionUser = dto.DescriptionUser,
+                Order = dto.Order ?? index
             };
 
             foreach (var scaleDto in dto.Scales)
@@ -92,7 +94,8 @@ public class DatabaseBootstrap : IDatabaseBootstrap
                         Rule = zoneDto.Rule,
                         Comment = zoneDto.Comment,
                         CommentUser = zoneDto.CommentUser,
-                        FromToAlias = zoneDto.FromToAlias
+                        FromToAlias = zoneDto.FromToAlias,
+                        ValueAlias = zoneDto.ValueAlias
                     };
                     scale.Zones.Add(zone);
                 }

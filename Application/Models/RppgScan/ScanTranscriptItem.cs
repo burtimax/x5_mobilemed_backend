@@ -9,6 +9,8 @@ public class ScanTranscriptItem
     /// Значение показателя из результата сканирования.
     /// </summary>
     public decimal Value { get; set; }
+
+    public string? ValueAlias => GetValueAlias();
     public string Color { get; set; }
     public string Name { get; set; }
     public string Unit { get; set; }
@@ -23,4 +25,15 @@ public class ScanTranscriptItem
     /// </summary>
     [JsonIgnore]
     public List<ScanTranscriptItemZone> Zones { get; set; }
+
+    public string? GetValueAlias()
+    {
+        if (Zones == null || Zones.Any() == false)
+        {
+            return null;
+        }
+
+        var zone = Zones.FirstOrDefault(z => (decimal)z.From <= Value && (decimal)z.To >= Value);
+        return zone?.ValueAlias;
+    }
 }

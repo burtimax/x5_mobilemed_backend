@@ -36,6 +36,12 @@ public class BiomarkerEntity
     public string? Unit { get; set; }
 
     /// <summary>
+    /// Порядок отображения (меньше — выше в списке).
+    /// </summary>
+    [Comment("Порядок отображения")]
+    public int Order { get; set; }
+
+    /// <summary>
     /// Техническое описание параметра.
     /// </summary>
     [Comment("Техническое описание параметра")]

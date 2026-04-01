@@ -34,7 +34,7 @@ namespace Application.Services.User
         /// <param name="request">Данные для авторизации</param>
         /// <param name="cancellation">Токен отмены операции</param>
         /// <returns>Результат авторизации с пользователем, профилем и токеном</returns>
-        Task<LoginResponse> LoginAsync(Guid? userId, CancellationToken cancellation);
+        Task<LoginResponse> LoginAsync(Guid? userId, string? utm, CancellationToken? cancellation);
 
         /// <summary>
         /// Обновление (refresh) JWT токена по данным из текущего токена

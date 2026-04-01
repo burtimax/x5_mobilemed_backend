@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -56,6 +57,11 @@ public class UserProfileEntity : BaseEntity
     /// </summary>
     [Comment("Цели пользователя")]
     public List<string>? Goals { get; set; } = new List<string>();
+
+    /// <summary>
+    /// UTM метка, с которой пришел пользователь.
+    /// </summary>
+    public string? UtmSource { get; set; }
 }
 
 /// <summary>

@@ -27,7 +27,7 @@ sealed public class LoginEndpoint : Endpoint<LoginRequest, LoginResponse>
 
     public override async Task HandleAsync(LoginRequest r, CancellationToken c)
     {
-        var result = await _userService.LoginAsync(r.Id, c);
+        var result = await _userService.LoginAsync(r.Id, r.Utm, c);
 
         await SendAsync(result, cancellation: c);
     }

@@ -187,7 +187,8 @@ namespace Application.Services.User
         /// <exception cref="Exception">Выбрасывается при ошибках авторизации</exception>
         public async Task<LoginResponse> LoginAsync(
             Guid? userId,
-            CancellationToken cancellation)
+            string? utm,
+            CancellationToken? cancellation)
         {
             try
             {
@@ -206,15 +207,18 @@ namespace Application.Services.User
                     UserEntity userEntity = new()
                     {
                         Profile = new UserProfileEntity()
+                        {
+                            UtmSource = utm,
+                        }
                     };
                     _db.Users.Add(userEntity);
-                    await _db.SaveChangesAsync(cancellation);
+                    await _db.SaveChangesAsync();
                     user = userEntity;
                 }
 
                 // Создаем токен
                 long sessionId = DateTime.UtcNow.Ticks;
-                var token = await CreateAuthTokenAsync(sessionId, user, null);
+                var token = await CreateAuthTokenAsync(sessionId, user, utm);
 
                 _logger.LogInformation("Успешный вход пользователя с ID: {UserId}", user.Id);
 

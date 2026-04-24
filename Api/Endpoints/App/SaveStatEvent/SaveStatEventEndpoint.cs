@@ -23,6 +23,7 @@ sealed class SaveStatEventEndpoint : Endpoint<SaveStatEventRequest, Result<StatE
     {
         Post("stat-event");
         Group<AppGroupEndpoints>();
+        AllowAnonymous();
         Summary(s =>
         {
             s.Summary = "Сохранение события статистики";
